@@ -1,0 +1,307 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions for authentication and authorization
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isOwnerByEmail(email) {
+      return isAuthenticated() && request.auth.token.email == email;
+    }
+    
+    function isOwnerByUid(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.admin == true;
+    }
+    
+    function isSupport() {
+      return isAuthenticated() && request.auth.token.support == true;
+    }
+    
+    function isValidUser() {
+      return isAuthenticated() && request.auth.uid != null;
+    }
+    
+    function isSystemService() {
+      return isAuthenticated() && request.auth.token.systemService == true;
+    }
+    
+    // Helper function to check if user owns document by email (NextAuth) OR by UID (Chrome extension)
+    function isOwnerByEmailOrUid(userEmail) {
+      return isAuthenticated() && 
+             (request.auth.token.email == userEmail || request.auth.uid == userEmail);
+    }
+    
+    // Helper functions for data validation
+    function isValidEmail(email) {
+      return email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+    
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['email', 'createdAt']) &&
+             data.email is string &&
+             isValidEmail(data.email) &&
+             data.createdAt is timestamp;
+    }
+    
+    function isValidBusinessProfile(data) {
+      return data.keys().hasAll(['businessName', 'productService', 'userId', 'createdAt']) &&
+             data.businessName is string &&
+             data.businessName.size() > 0 &&
+             data.productService is string &&
+             data.productService.size() > 0 &&
+             data.userId is string &&
+             data.createdAt is timestamp;
+    }
+    
+    function isValidPrompt(data) {
+      return data.keys().hasAll(['text', 'userId', 'createdAt']) &&
+             data.text is string &&
+             data.text.size() > 0 &&
+             data.userId is string &&
+             data.createdAt is timestamp;
+    }
+    
+    function isValidSubscriptionPlan(plan) {
+      return plan in ['free', 'starter', 'professional'];
+    }
+    
+    function isValidSubscriptionStatus(status) {
+      return status in ['active', 'canceled', 'past_due', 'trialing', 'incomplete', 'incomplete_expired'];
+    }
+    
+    function isValidTransactionType(type) {
+      return type in ['usage', 'allocation', 'purchase', 'reset', 'refund', 'bonus', 'manual_adjustment'];
+    }
+    
+    function hasValidTransactionData(data) {
+      return data.keys().hasAll(['userId', 'type', 'amount', 'balanceAfter', 'timestamp', 'description']) &&
+             data.userId is string &&
+             isValidTransactionType(data.type) &&
+             data.amount is number &&
+             data.balanceAfter is number &&
+             data.balanceAfter >= 0 &&
+             data.timestamp is timestamp &&
+             data.description is string;
+    }
+    
+    // Users collection rules - UID-BASED DOCUMENT IDs with AI generation support
+    match /users/{userId} {
+      // Allow read access to own user document
+      allow read: if isOwner(userId);
+      
+      // Allow admins and support to read any user document
+      allow read: if isAdmin() || isSupport();
+      
+      // Allow create for authenticated users creating their own document
+      allow create: if isOwner(userId) &&
+                       isValidUserProfile(request.resource.data);
+      
+      // Allow update to own document with valid data
+      allow update: if isOwner(userId) &&
+                       isValidUserProfile(request.resource.data);
+      
+      // Prevent deletion of user documents (except by admin)
+      allow delete: if isAdmin();
+      
+      // User profile subcollection
+      match /userprofile/{profileId} {
+        // Allow full access to own profile documents
+        allow read, create, update, delete: if isOwner(userId);
+        
+        // Allow admins and support to read any profile
+        allow read: if isAdmin() || isSupport();
+        
+        // Allow admins to delete profiles
+        allow delete: if isAdmin();
+      }
+      
+      // Prompts subcollection
+      match /prompts/{promptId} {
+        // Allow users to read, create, and update their own prompts
+        allow read, create, update: if isOwner(userId);
+        
+        // Allow users to delete their own prompts
+        allow delete: if isOwner(userId);
+        
+        // Allow admins to read and delete any prompts
+        allow read, delete: if isAdmin() || isSupport();
+      }
+      
+      // Business profiles subcollection
+      match /businessProfiles/{businessId} {
+        // Allow users to read, create, and update their own business profile
+        allow read, create, update: if isOwner(userId);
+        
+        // Allow users to delete their own business profile
+        allow delete: if isOwner(userId);
+        
+        // Allow admins to read and delete any business profile
+        allow read, delete: if isAdmin() || isSupport();
+      }
+      
+      // Credit transactions subcollection (for AI generation billing)
+      match /creditTransactions/{transactionId} {
+        // Allow read access to own transactions
+        allow read: if isOwner(userId);
+        
+        // Allow admins and support to read any transactions
+        allow read: if isAdmin() || isSupport();
+        
+        // Allow system services and admins to create transactions
+        allow create: if (isSystemService() || isAdmin()) && 
+                         hasValidTransactionData(request.resource.data) &&
+                         request.resource.data.userId == userId;
+        
+        // Allow users to create their own transactions (for client-side logging)
+        allow create: if isOwner(userId) && 
+                         hasValidTransactionData(request.resource.data) &&
+                         request.resource.data.userId == userId;
+        
+        // Prevent updates to transactions (immutable audit trail)
+        allow update: if false;
+        
+        // Allow admins to delete transactions if needed
+        allow delete: if isAdmin();
+      }
+      
+      // Usage analytics subcollection (for AI generation tracking)
+      match /usageAnalytics/{analyticsId} {
+        // Allow read access to own analytics
+        allow read: if isOwner(userId);
+        
+        // Allow admins and support to read any analytics
+        allow read: if isAdmin() || isSupport();
+        
+        // Allow system services and users to create analytics
+        allow create: if (isSystemService() || isOwner(userId)) && 
+                         request.resource.data.userId == userId;
+        
+        // Allow system services to update analytics
+        allow update: if isSystemService() || isAdmin();
+        
+        // Allow admins to delete analytics if needed
+        allow delete: if isAdmin();
+      }
+      
+      // Daily usage summaries subcollection (for AI generation limits)
+      match /dailyUsageSummaries/{summaryId} {
+        // Allow read access to own summaries
+        allow read: if isOwner(userId);
+        
+        // Allow admins and support to read any summaries
+        allow read: if isAdmin() || isSupport();
+        
+        // Allow system services to create/update summaries
+        allow create, update: if isSystemService() || isAdmin();
+        
+        // Allow admins to delete summaries if needed
+        allow delete: if isAdmin();
+      }
+      
+      // Monthly analytics reports subcollection
+      match /monthlyAnalyticsReports/{reportId} {
+        // Allow read access to own reports
+        allow read: if isOwner(userId);
+        
+        // Allow admins and support to read any reports
+        allow read: if isAdmin() || isSupport();
+        
+        // Allow system services to create/update reports
+        allow create, update: if isSystemService() || isAdmin();
+        
+        // Allow admins to delete reports if needed
+        allow delete: if isAdmin();
+      }
+      
+      // AI generation jobs subcollection (CRITICAL for AI generation)
+      match /generationJobs/{jobId} {
+        // Allow read access to own generation jobs
+        allow read: if isOwner(userId);
+        
+        // Allow admins and support to read any generation jobs
+        allow read: if isAdmin() || isSupport();
+        
+        // Allow system services to create and update generation jobs
+        allow create, update: if isSystemService() || isAdmin();
+        
+        // Allow admins to delete generation jobs if needed
+        allow delete: if isAdmin();
+      }
+      
+      // Profile subcollection - For user and business details (NextAuth compatibility)
+      match /profile/{documentId} {
+        // Allow read and write access to own profile documents ('user' or 'business')
+        allow read, write: if isOwner(userId) &&
+                              documentId in ['user', 'business'];
+        
+        // Allow admins to read any profile
+        allow read: if isAdmin() || isSupport();
+        
+        // Allow admins to update any profile
+        allow update: if isAdmin();
+      }
+    }
+    
+    // System-wide analytics (admin only)
+    match /systemAnalytics/{analyticsId} {
+      allow read: if isAdmin() || isSupport();
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Error reports (admin and support)
+    match /errorReports/{reportId} {
+      allow read: if isAdmin() || isSupport();
+      allow create, update, delete: if isAdmin();
+      
+      // Allow users to create error reports for their own issues
+      allow create: if isValidUser() && 
+                       request.resource.data.userId == request.auth.uid;
+    }
+    
+    // Plan configurations (read-only for users, admin-only for write)
+    match /planConfigurations/{planId} {
+      allow read: if isValidUser();
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Subscription webhooks log (admin only)
+    match /webhookLogs/{logId} {
+      allow read: if isAdmin() || isSupport();
+      allow create, update, delete: if isAdmin() || isSystemService();
+    }
+    
+    // Credit transaction batches (admin only)
+    match /creditTransactionBatches/{batchId} {
+      allow read: if isAdmin() || isSupport();
+      allow create, update, delete: if isAdmin() || isSystemService();
+    }
+    
+    // Rate limiting and abuse prevention (admin and system)
+    match /rateLimits/{limitId} {
+      allow read: if isAdmin() || isSupport() || isSystemService();
+      allow create, update, delete: if isAdmin() || isSystemService();
+    }
+    
+    // Audit logs (admin and support read, admin write)
+    match /auditLogs/{logId} {
+      allow read: if isAdmin() || isSupport();
+      allow create, update, delete: if isAdmin() || isSystemService();
+    }
+    
+    // Default deny rule for any unmatched paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
