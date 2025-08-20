@@ -14,40 +14,26 @@ export function PromptForm({ prompt, onCancel }: PromptFormProps) {
   const { user } = useAuth();
   const { updatePrompt, loading } = usePrompts(user?.uid || '');
   
-  const [formData, setFormData] = useState<PromptFormData>({
+  const [formData, setFormData] = useState<{ content: string }>({
     content: '',
-    hasText: false,
-    rating: 0,
-    version: 1,
   });
 
-  const [errors, setErrors] = useState<Partial<Record<keyof PromptFormData, string>>>({});
+  const [errors, setErrors] = useState<{ content?: string }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize form with existing data
   useEffect(() => {
     setFormData({
       content: prompt.content,
-      hasText: prompt.hasText,
-      rating: prompt.rating,
-      version: prompt.version,
     });
   }, [prompt]);
 
   // Validate form data
   const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof PromptFormData, string>> = {};
+    const newErrors: { content?: string } = {};
 
     if (!formData.content.trim()) {
       newErrors.content = 'Prompt content is required';
-    }
-
-    if (formData.rating < 0 || formData.rating > 10) {
-      newErrors.rating = 'Rating must be between 0 and 10';
-    }
-
-    if (formData.version < 1) {
-      newErrors.version = 'Version must be at least 1';
     }
 
     setErrors(newErrors);
@@ -65,7 +51,13 @@ export function PromptForm({ prompt, onCancel }: PromptFormProps) {
     setIsSubmitting(true);
 
     try {
-      await updatePrompt(prompt.id, formData);
+      // Only update the content field, preserve other fields
+      await updatePrompt(prompt.id, {
+        content: formData.content,
+        hasText: prompt.hasText,
+        rating: prompt.rating,
+        version: prompt.version,
+      });
       // The real-time subscription will automatically update the state
       onCancel(); // Close the form after successful update
     } catch (error) {
@@ -77,7 +69,7 @@ export function PromptForm({ prompt, onCancel }: PromptFormProps) {
   };
 
   // Handle input changes
-  const handleInputChange = (field: keyof PromptFormData, value: string | number | boolean) => {
+  const handleInputChange = (field: 'content', value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // Clear error for this field when user starts typing
@@ -92,7 +84,7 @@ export function PromptForm({ prompt, onCancel }: PromptFormProps) {
     <div className="p-6 bg-white rounded-lg shadow-md">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">
-          Edit Pro Mode Prompt
+          Edit Prompt Content
         </h3>
         <button
           onClick={onCancel}
@@ -131,78 +123,7 @@ export function PromptForm({ prompt, onCancel }: PromptFormProps) {
           </p>
         </div>
 
-        {/* Has Text Checkbox */}
-        <div>
-          <div className="flex items-center">
-            <input
-              id="hasText"
-              type="checkbox"
-              checked={formData.hasText}
-              onChange={(e) => handleInputChange('hasText', e.target.checked)}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              disabled={isFormDisabled}
-            />
-            <label htmlFor="hasText" className="ml-2 block text-sm text-gray-700">
-              Has Text Content
-            </label>
-          </div>
-          <p className="mt-1 text-xs text-gray-500">
-            Check this if the prompt contains text content.
-          </p>
-        </div>
 
-        {/* Rating */}
-        <div>
-          <label htmlFor="rating" className="block text-sm font-medium text-gray-700">
-            Rating (0-10)
-          </label>
-          <input
-            type="number"
-            id="rating"
-            min="0"
-            max="10"
-            step="0.1"
-            value={formData.rating}
-            onChange={(e) => handleInputChange('rating', parseFloat(e.target.value) || 0)}
-            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
-              errors.rating ? 'border-red-300' : ''
-            }`}
-            placeholder="0.0"
-            disabled={isFormDisabled}
-          />
-          {errors.rating && (
-            <p className="mt-1 text-sm text-red-600">{errors.rating}</p>
-          )}
-          <p className="mt-1 text-xs text-gray-500">
-            Rate this prompt from 0 to 10 based on its effectiveness.
-          </p>
-        </div>
-
-        {/* Version */}
-        <div>
-          <label htmlFor="version" className="block text-sm font-medium text-gray-700">
-            Version
-          </label>
-          <input
-            type="number"
-            id="version"
-            min="1"
-            step="1"
-            value={formData.version}
-            onChange={(e) => handleInputChange('version', parseInt(e.target.value) || 1)}
-            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
-              errors.version ? 'border-red-300' : ''
-            }`}
-            placeholder="1"
-            disabled={isFormDisabled}
-          />
-          {errors.version && (
-            <p className="mt-1 text-sm text-red-600">{errors.version}</p>
-          )}
-          <p className="mt-1 text-xs text-gray-500">
-            Version number for this prompt (starts at 1).
-          </p>
-        </div>
 
         {/* Form Actions */}
         <div className="flex justify-end space-x-3 pt-4">
