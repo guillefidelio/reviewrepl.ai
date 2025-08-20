@@ -32,10 +32,16 @@ export function useUserProfile(userId: string | undefined) {
           const data = doc.data();
           setProfile({
             uid: doc.id,
+            userId: doc.id,
             email: data.email,
             displayName: data.displayName,
-            phoneNumber: data.phoneNumber,
-            photoURL: data.photoURL,
+            phone: data.phone,
+            bio: data.bio,
+            location: data.location,
+            website: data.website,
+            company: data.company,
+            jobTitle: data.jobTitle,
+            avatar: data.avatar,
             createdAt: data.createdAt?.toDate() || new Date(),
             updatedAt: data.updatedAt?.toDate() || new Date(),
           });
@@ -60,10 +66,16 @@ export function useUserProfile(userId: string | undefined) {
 
     const profileData = {
       uid: userId,
+      userId: userId,
       email: userData.email || '',
       displayName: userData.displayName || '',
-      phoneNumber: userData.phoneNumber || '',
-      photoURL: userData.photoURL || '',
+      phone: userData.phone || '',
+      bio: userData.bio || '',
+      location: userData.location || '',
+      website: userData.website || '',
+      company: userData.company || '',
+      jobTitle: userData.jobTitle || '',
+      avatar: userData.avatar || '',
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
     };
@@ -170,89 +182,5 @@ export function useBusinessProfile(userId: string | undefined) {
     error,
     createBusinessProfile,
     updateBusinessProfile,
-  };
-}
-
-// Prompts Operations
-export function usePrompts(userId: string | undefined) {
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!userId || !db) {
-      setLoading(false);
-      return;
-    }
-
-    const unsubscribe = onSnapshot(
-      collection(db, 'users', userId, 'prompts'),
-      (snapshot) => {
-        const promptsList = snapshot.docs.map(doc => ({
-          id: doc.id,
-          userId: doc.data().userId,
-          text: doc.data().text,
-          metadata: doc.data().metadata,
-          createdAt: doc.data().createdAt?.toDate() || new Date(),
-          updatedAt: doc.data().updatedAt?.toDate() || new Date(),
-        }));
-        setPrompts(promptsList);
-        setLoading(false);
-        setError(null);
-      },
-      (err) => {
-        console.error('Error fetching prompts:', err);
-        setError(err.message);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [userId]);
-
-  const createPrompt = async (text: string, metadata?: Record<string, unknown>): Promise<string> => {
-    if (!userId || !db) throw new Error('User ID or Firestore not available');
-
-    const promptData = {
-      userId,
-      text,
-      metadata: metadata || {},
-      createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    };
-
-    const docRef = await addDoc(collection(db, 'users', userId, 'prompts'), promptData);
-    return docRef.id;
-  };
-
-  const updatePrompt = async (promptId: string, updates: Partial<Prompt>): Promise<void> => {
-    if (!userId || !db) throw new Error('User ID or Firestore not available');
-
-    const updateData = {
-      ...updates,
-      updatedAt: Timestamp.now(),
-    };
-
-    await updateDoc(doc(db, 'users', userId, 'prompts', promptId), updateData);
-  };
-
-  const deletePrompt = async (promptId: string): Promise<void> => {
-    if (!userId || !db) throw new Error('User ID or Firestore not available');
-
-    // Note: We'll need to implement delete functionality in the security rules
-    // For now, we'll just update the prompt to mark it as deleted
-    await updateDoc(doc(db, 'users', userId, 'prompts', promptId), {
-      deleted: true,
-      updatedAt: Timestamp.now(),
-    });
-  };
-
-  return {
-    prompts,
-    loading,
-    error,
-    createPrompt,
-    updatePrompt,
-    deletePrompt,
   };
 }

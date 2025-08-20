@@ -98,8 +98,37 @@ export interface BusinessProfileState {
 export interface Prompt {
   id: string;
   userId: string;
-  text: string;
-  metadata?: Record<string, unknown>;
+  content: string;
+  hasText: boolean;
+  rating: number;
+  version: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// Prompt form data (for create/update operations)
+export interface PromptFormData {
+  content: string;
+  hasText: boolean;
+  rating: number;
+  version: number;
+}
+
+// Prompt operation states
+export interface PromptState {
+  data: Prompt[] | null;
+  loading: boolean;
+  error: string | null;
+  isEditing: boolean;
+  isCreating: boolean;
+  editingPromptId: string | null;
+}
+
+// Prompt hook return type
+export interface PromptHookReturn extends PromptState {
+  createPrompt: (formData: PromptFormData) => Promise<boolean | undefined>;
+  updatePrompt: (promptId: string, formData: PromptFormData) => Promise<boolean | undefined>;
+  deletePrompt: (promptId: string) => Promise<void>;
+  toggleEditMode: (promptId?: string) => void;
+  clearError: () => void;
 }

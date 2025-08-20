@@ -7,6 +7,7 @@ import { SecurityRulesTest } from '@/components/auth/SecurityRulesTest';
 import { UserProfile } from '@/components/profile/UserProfile';
 import { ProfileTest } from '@/components/profile/ProfileTest';
 import { BusinessProfile } from '@/components/profile/BusinessProfile';
+import { Prompts } from '@/components/profile/Prompts';
 
 export default function DashboardPage() {
   const { user, userProfile, loading, signOut } = useAuth();
@@ -94,6 +95,7 @@ export default function DashboardPage() {
 
           <UserProfile />
           <BusinessProfile />
+          <Prompts />
           <ProfileTest />
           <SecurityRulesTest />
         </div>
