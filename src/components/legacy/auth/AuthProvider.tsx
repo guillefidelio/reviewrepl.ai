@@ -9,7 +9,7 @@ import {
   onAuthStateChanged,
   User
 } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { AuthContextType, UserProfile } from '@/lib/types';
 
@@ -34,73 +34,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
 
-  // Real-time subscription to user profile from Firestore
-  useEffect(() => {
-    if (!user?.uid || !db) {
-      setUserProfile(null);
-      setProfileLoading(false);
+  // Fetch user profile from Firestore
+  const fetchUserProfile = async (userId: string) => {
+    if (!db) {
+      console.warn('Firestore is not initialized');
       return;
     }
 
     setProfileLoading(true);
     setProfileError(null);
 
-    // Subscribe to real-time updates for user profile
-    const unsubscribe = onSnapshot(
-      doc(db, 'users', user.uid),
-      (docSnapshot) => {
-        console.log('AuthProvider: User profile updated:', docSnapshot.exists(), docSnapshot.data());
-        
-        if (docSnapshot.exists()) {
-          const data = docSnapshot.data();
-          const profile: UserProfile = {
-            uid: docSnapshot.id,
-            userId: docSnapshot.id, // Add missing userId field
-            email: data.email,
-            displayName: data.displayName,
-            phone: data.phone || data.phoneNumber || '', // Handle both property names
-            avatar: data.avatar || data.photoURL || '', // Handle both property names
-            bio: data.bio || '',
-            location: data.location || '',
-            website: data.website || '',
-            company: data.company || '',
-            jobTitle: data.jobTitle || '',
-            answeringMode: data.answeringMode ? {
-              selectedMode: data.answeringMode.selectedMode || 'simple',
-              lastUpdated: data.answeringMode.lastUpdated?.toDate() || new Date(),
-              isActive: data.answeringMode.isActive || false
-            } : undefined,
-            createdAt: data.createdAt?.toDate() || new Date(),
-            updatedAt: data.updatedAt?.toDate() || new Date(),
-          };
-          
-          console.log('AuthProvider: Parsed profile:', profile);
-          console.log('AuthProvider: Answering mode:', profile.answeringMode);
-          setUserProfile(profile);
-        } else {
-          console.log('AuthProvider: User document does not exist');
-          setUserProfile(null);
-        }
-        setProfileLoading(false);
-      },
-      (err) => {
-        console.error('Error listening to user profile:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load profile data';
-        setProfileError(errorMessage);
+    try {
+      const userDoc = await getDoc(doc(db, 'users', userId));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        const profile: UserProfile = {
+          uid: userDoc.id,
+          userId: userDoc.id, // Add missing userId field
+          email: data.email,
+          displayName: data.displayName,
+          phone: data.phone || data.phoneNumber || '', // Handle both property names
+          avatar: data.avatar || data.photoURL || '', // Handle both property names
+          bio: data.bio || '',
+          location: data.location || '',
+          website: data.website || '',
+          company: data.company || '',
+          jobTitle: data.jobTitle || '',
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+        };
+        setUserProfile(profile);
+      } else {
         setUserProfile(null);
-        setProfileLoading(false);
       }
-    );
+    } catch (err) {
+      console.error('Error fetching user profile:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load profile data';
+      setProfileError(errorMessage);
+      setUserProfile(null);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
-    // Cleanup subscription on unmount or user change
-    return () => unsubscribe();
-  }, [user?.uid]);
-
-  // Refresh user profile data (now just triggers a re-fetch through the real-time listener)
+  // Refresh user profile data
   const refreshUserProfile = async () => {
-    // The real-time listener will automatically handle updates
-    // This function is kept for backward compatibility
-    console.log('Profile refresh requested - real-time listener will handle updates automatically');
+    if (user?.uid) {
+      await fetchUserProfile(user.uid);
+    }
   };
 
   // Sign in with email and password
@@ -181,11 +162,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       
-      if (!user) {
+      if (user) {
+        // Fetch user profile when user signs in
+        await fetchUserProfile(user.uid);
+      } else {
         // Clear user profile when user signs out
         setUserProfile(null);
         setProfileError(null);
-        setProfileLoading(false);
       }
       
       setLoading(false);

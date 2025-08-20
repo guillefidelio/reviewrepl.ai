@@ -48,10 +48,37 @@ service cloud.firestore {
     }
     
     function isValidUserProfile(data) {
-      return data.keys().hasAll(['email', 'createdAt']) &&
-             data.email is string &&
-             isValidEmail(data.email) &&
-             data.createdAt is timestamp;
+      // For partial updates, only validate the fields that are present
+      // Required fields for new documents
+      let isValid = true;
+      
+      // If email is present, validate it
+      if (data.keys().hasAny(['email'])) {
+        isValid = isValid && data.email is string && isValidEmail(data.email);
+      }
+      
+      // If createdAt is present, validate it
+      if (data.keys().hasAny(['createdAt'])) {
+        isValid = isValid && data.createdAt is timestamp;
+      }
+      
+      // If answeringMode is present, validate it
+      if (data.keys().hasAny(['answeringMode'])) {
+        isValid = isValid && data.answeringMode is map;
+        if (data.answeringMode is map) {
+          if (data.answeringMode.keys().hasAny(['selectedMode'])) {
+            isValid = isValid && data.answeringMode.selectedMode in ['simple', 'pro'];
+          }
+          if (data.answeringMode.keys().hasAny(['lastUpdated'])) {
+            isValid = isValid && data.answeringMode.lastUpdated is timestamp;
+          }
+          if (data.answeringMode.keys().hasAny(['isActive'])) {
+            isValid = isValid && data.answeringMode.isActive is bool;
+          }
+        }
+      }
+      
+      return isValid;
     }
     
     function isValidBusinessProfile(data) {
@@ -109,6 +136,11 @@ service cloud.firestore {
       
       // Allow update to own document with valid data
       allow update: if isOwner(userId) &&
+                       isValidUserProfile(request.resource.data);
+      
+      // Allow specific updates to answering mode (for better performance and security)
+      allow update: if isOwner(userId) &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['answeringMode']) &&
                        isValidUserProfile(request.resource.data);
       
       // Prevent deletion of user documents (except by admin)
@@ -298,6 +330,8 @@ service cloud.firestore {
       allow read: if isAdmin() || isSupport();
       allow create, update, delete: if isAdmin() || isSystemService();
     }
+    
+
     
     // Default deny rule for any unmatched paths
     match /{document=**} {

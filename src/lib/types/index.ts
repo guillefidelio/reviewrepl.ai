@@ -29,6 +29,11 @@ export interface UserProfile {
   company?: string;
   jobTitle?: string;
   avatar?: string;
+  answeringMode?: {
+    selectedMode: 'simple' | 'pro';
+    lastUpdated: Date;
+    isActive: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
 }

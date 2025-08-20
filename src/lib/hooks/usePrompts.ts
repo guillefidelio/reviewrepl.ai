@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { doc, setDoc, updateDoc, deleteDoc, collection, query, orderBy, onSnapshot, Timestamp } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, deleteDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Prompt, PromptFormData, PromptState } from '@/lib/types';
 

@@ -11,7 +11,7 @@ import {
   onSnapshot,
   Timestamp 
 } from 'firebase/firestore';
-import { UserProfile, BusinessProfile, Prompt } from '@/lib/types';
+import { UserProfile, BusinessProfile } from '@/lib/types';
 
 // User Profile Operations
 export function useUserProfile(userId: string | undefined) {

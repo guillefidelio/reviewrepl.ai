@@ -43,6 +43,11 @@ export function useUserProfile(userId: string): UserProfileHookReturn {
             company: data.company || '',
             jobTitle: data.jobTitle || '',
             avatar: data.avatar || '',
+            answeringMode: data.answeringMode || {
+              selectedMode: 'simple',
+              lastUpdated: new Date(),
+              isActive: true
+            },
             createdAt: data.createdAt?.toDate() || new Date(),
             updatedAt: data.updatedAt?.toDate() || new Date(),
           };
@@ -95,6 +100,11 @@ export function useUserProfile(userId: string): UserProfileHookReturn {
         company: formData.company || '',
         jobTitle: formData.jobTitle || '',
         avatar: '', // Will be set separately if needed
+        answeringMode: {
+          selectedMode: 'simple',
+          lastUpdated: new Date(),
+          isActive: true
+        },
         createdAt: new Date(),
         updatedAt: new Date(),
       };

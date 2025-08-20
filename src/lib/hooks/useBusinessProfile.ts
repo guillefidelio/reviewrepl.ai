@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { doc, setDoc, updateDoc, deleteDoc, collection, query, where, getDocs, Timestamp, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, deleteDoc, collection, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { BusinessProfile, BusinessProfileFormData, BusinessProfileState } from '@/lib/types';
 
@@ -81,7 +81,6 @@ export function useBusinessProfile(userId: string) {
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      const businessProfileRef = doc(db, 'users', userId, 'businessProfiles', userId);
       const docSnap = await getDocs(collection(db, 'users', userId, 'businessProfiles'));
       
       if (!docSnap.empty) {
