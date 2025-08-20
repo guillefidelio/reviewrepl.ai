@@ -6,13 +6,13 @@ import { usePrompts } from '@/lib/hooks/usePrompts';
 import { Prompt, PromptFormData } from '@/lib/types';
 
 interface PromptFormProps {
-  prompt?: Prompt | null;
+  prompt: Prompt; // Required since we only allow editing
   onCancel: () => void;
 }
 
 export function PromptForm({ prompt, onCancel }: PromptFormProps) {
   const { user } = useAuth();
-  const { createPrompt, updatePrompt, isCreating, loading } = usePrompts(user?.uid || '');
+  const { updatePrompt, loading } = usePrompts(user?.uid || '');
   
   const [formData, setFormData] = useState<PromptFormData>({
     content: '',
@@ -24,16 +24,14 @@ export function PromptForm({ prompt, onCancel }: PromptFormProps) {
   const [errors, setErrors] = useState<Partial<Record<keyof PromptFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize form with existing data if editing
+  // Initialize form with existing data
   useEffect(() => {
-    if (prompt) {
-      setFormData({
-        content: prompt.content,
-        hasText: prompt.hasText,
-        rating: prompt.rating,
-        version: prompt.version,
-      });
-    }
+    setFormData({
+      content: prompt.content,
+      hasText: prompt.hasText,
+      rating: prompt.rating,
+      version: prompt.version,
+    });
   }, [prompt]);
 
   // Validate form data
@@ -67,18 +65,9 @@ export function PromptForm({ prompt, onCancel }: PromptFormProps) {
     setIsSubmitting(true);
 
     try {
-      if (prompt) {
-        // Update existing prompt
-        await updatePrompt(prompt.id, formData);
-        // The real-time subscription will automatically update the state
-        // No need to manually update state here
-        onCancel(); // Close the form after successful update
-      } else {
-        // Create new prompt
-        await createPrompt(formData);
-        // The real-time subscription will automatically update the state
-        onCancel(); // Close the form after successful creation
-      }
+      await updatePrompt(prompt.id, formData);
+      // The real-time subscription will automatically update the state
+      onCancel(); // Close the form after successful update
     } catch (error) {
       console.error('Error saving prompt:', error);
       // Error is handled by the hook and displayed in parent
@@ -97,13 +86,13 @@ export function PromptForm({ prompt, onCancel }: PromptFormProps) {
     }
   };
 
-  const isFormDisabled = isSubmitting || loading || isCreating;
+  const isFormDisabled = isSubmitting || loading;
 
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">
-          {prompt ? 'Edit Prompt' : 'Create Prompt'}
+          Edit Pro Mode Prompt
         </h3>
         <button
           onClick={onCancel}
@@ -238,10 +227,8 @@ export function PromptForm({ prompt, onCancel }: PromptFormProps) {
                 </svg>
                 Saving...
               </div>
-            ) : prompt ? (
-              'Update Prompt'
             ) : (
-              'Create Prompt'
+              'Update Prompt'
             )}
           </button>
         </div>

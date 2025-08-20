@@ -11,18 +11,15 @@ export function Prompts() {
     loading,
     error,
     isEditing,
-    isCreating,
     editingPromptId,
     toggleEditMode,
     clearError,
-    deletePrompt,
   } = usePrompts(user?.uid || '');
 
   // Debug: Log every render to see if component is re-rendering
   console.log('Prompts render:', { 
     promptsCount: prompts?.length || 0, 
     isEditing, 
-    isCreating, 
     loading,
     editingPromptId,
     timestamp: Date.now()
@@ -86,40 +83,38 @@ export function Prompts() {
   }
 
   // Show edit form if editing
-  if (isEditing) {
+  if (isEditing && editingPromptId) {
     const editingPrompt = prompts?.find(p => p.id === editingPromptId);
-    return (
-      <PromptForm 
-        prompt={editingPrompt}
-        onCancel={() => toggleEditMode()}
-      />
-    );
+    if (editingPrompt) {
+      return (
+        <PromptForm 
+          prompt={editingPrompt}
+          onCancel={() => toggleEditMode()}
+        />
+      );
+    }
   }
 
-  // Show create form if creating
-  if (isCreating) {
-    return (
-      <PromptForm 
-        prompt={null}
-        onCancel={() => toggleEditMode()}
-      />
-    );
-  }
+
 
   // Show prompts list
   return (
     <div className="p-6 bg-white rounded-lg shadow-md">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Prompts</h3>
-        <button
-          onClick={() => toggleEditMode()}
-          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          Add Prompt
-        </button>
+        <h3 className="text-lg font-semibold text-gray-900">Pro Mode Prompts</h3>
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">Mode:</span>
+            <select 
+              className="text-sm border border-gray-300 rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              defaultValue="pro"
+              aria-label="Select prompt mode"
+            >
+              <option value="simple">Simple</option>
+              <option value="pro">Pro</option>
+            </select>
+          </div>
+        </div>
       </div>
       
       {!prompts || prompts.length === 0 ? (
@@ -131,17 +126,9 @@ export function Prompts() {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-blue-800">No Prompts Found</h3>
+              <h3 className="text-sm font-medium text-blue-800">No Pro Mode Prompts Found</h3>
               <div className="mt-2 text-sm text-blue-700">
-                <p>You haven&apos;t created any prompts yet. Create your first prompt to get started!</p>
-              </div>
-              <div className="mt-4">
-                <button
-                  onClick={() => toggleEditMode()}
-                  className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  Create First Prompt
-                </button>
+                <p>Pro mode prompts will be available here. These are pre-configured prompts that you can customize but cannot delete.</p>
               </div>
             </div>
           </div>
@@ -180,18 +167,9 @@ export function Prompts() {
                     className="inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     <svg className="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.2.828l8.586-8.586z" />
                     </svg>
                     Edit
-                  </button>
-                  <button
-                    onClick={() => deletePrompt(prompt.id)}
-                    className="inline-flex items-center px-2 py-1 border border-red-300 text-xs font-medium rounded text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                  >
-                    <svg className="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete
                   </button>
                 </div>
               </div>
