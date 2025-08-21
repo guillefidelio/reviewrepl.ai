@@ -18,9 +18,11 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
   const [formData, setFormData] = useState<BusinessProfileFormData>({
     // Essential Parameters
     businessName: '',
-    businessType: 'Restaurant',
+    businessMainCategory: 'Restaurant',
+    businessSecondaryCategory: '',
     businessTags: [],
     mainProductsServices: '',
+    briefDescription: '',
     country: '',
     stateProvince: '',
     language: 'English',
@@ -35,13 +37,7 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
     
     // Advanced Options
     brandVoiceNotes: '',
-    contactPreferences: {
-      includePhone: false,
-      includeEmail: false,
-      includeWebsite: false,
-      includeSocialMedia: false,
-    },
-    specialSituations: '',
+    otherConsiderations: '',
   });
 
   const [errors, setErrors] = useState<Partial<BusinessProfileFormData>>({});
@@ -54,9 +50,11 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
     if (businessProfile) {
       setFormData({
         businessName: businessProfile.businessName || '',
-        businessType: businessProfile.businessType || 'Restaurant',
+        businessMainCategory: businessProfile.businessMainCategory || 'Restaurant',
+        businessSecondaryCategory: businessProfile.businessSecondaryCategory || '',
         businessTags: businessProfile.businessTags || [],
         mainProductsServices: businessProfile.mainProductsServices || '',
+        briefDescription: businessProfile.briefDescription || '',
         country: businessProfile.country || '',
         stateProvince: businessProfile.stateProvince || '',
         language: businessProfile.language || 'English',
@@ -67,13 +65,7 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
         positiveReviewCTA: businessProfile.positiveReviewCTA || '',
         negativeReviewEscalation: businessProfile.negativeReviewEscalation || '',
         brandVoiceNotes: businessProfile.brandVoiceNotes || '',
-        contactPreferences: businessProfile.contactPreferences || {
-          includePhone: false,
-          includeEmail: false,
-          includeWebsite: false,
-          includeSocialMedia: false,
-        },
-        specialSituations: businessProfile.specialSituations || '',
+        otherConsiderations: businessProfile.otherConsiderations || '',
       });
     }
   }, [businessProfile]);
@@ -135,16 +127,7 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
     }
   };
 
-  // Handle contact preferences changes
-  const handleContactPreferenceChange = (preference: keyof typeof formData.contactPreferences, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      contactPreferences: {
-        ...prev.contactPreferences,
-        [preference]: checked,
-      }
-    }));
-  };
+
 
   // Handle tag management
   const addTag = () => {
@@ -168,7 +151,7 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
   const isCreating = !businessProfile;
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="w-full">
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Essential Parameters Section */}
         <div className="bg-white p-6 rounded-lg border border-gray-200">
@@ -197,24 +180,33 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
 
             {/* Business Type */}
             <div>
-              <label htmlFor="businessType" className="block text-sm font-medium text-gray-700">
-                Business Type *
+              <label htmlFor="businessMainCategory" className="block text-sm font-medium text-gray-700">
+                Business Main Category *
               </label>
-              <select
-                id="businessType"
+              <input
+                id="businessMainCategory"
+                type="text"
                 required
-                value={formData.businessType}
-                onChange={(e) => handleInputChange('businessType', e.target.value)}
+                value={formData.businessMainCategory}
+                onChange={(e) => handleInputChange('businessMainCategory', e.target.value)}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="Restaurant">Restaurant</option>
-                <option value="Retail Store">Retail Store</option>
-                <option value="Medical/Healthcare">Medical/Healthcare</option>
-                <option value="Auto Service">Auto Service</option>
-                <option value="Beauty/Salon">Beauty/Salon</option>
-                <option value="Professional Services">Professional Services</option>
-                <option value="Hotel/Lodging">Hotel/Lodging</option>
-              </select>
+                placeholder="e.g., Restaurant, Retail Store, Medical/Healthcare"
+              />
+            </div>
+
+            {/* Business Secondary Category */}
+            <div>
+              <label htmlFor="businessSecondaryCategory" className="block text-sm font-medium text-gray-700">
+                Business Secondary Category
+              </label>
+              <input
+                id="businessSecondaryCategory"
+                type="text"
+                value={formData.businessSecondaryCategory}
+                onChange={(e) => handleInputChange('businessSecondaryCategory', e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., Italian Cuisine, Electronics, Pediatrics"
+              />
             </div>
 
             {/* Language */}
@@ -361,6 +353,21 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
                 <p className="mt-1 text-sm text-red-600">{errors.mainProductsServices}</p>
               )}
             </div>
+
+            {/* Brief Description */}
+            <div className="md:col-span-2">
+              <label htmlFor="briefDescription" className="block text-sm font-medium text-gray-700">
+                Brief Description of Your Business
+              </label>
+              <textarea
+                id="briefDescription"
+                rows={3}
+                value={formData.briefDescription}
+                onChange={(e) => handleInputChange('briefDescription', e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Provide a brief overview of your business, mission, and what makes you unique..."
+              />
+            </div>
           </div>
         </div>
 
@@ -489,38 +496,18 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
                 />
               </div>
 
-              {/* Contact Preferences */}
+              {/* Other Considerations */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contact Preferences
-                </label>
-                <div className="grid grid-cols-2 gap-4">
-                  {(['includePhone', 'includeEmail', 'includeWebsite', 'includeSocialMedia'] as const).map((preference) => (
-                    <label key={preference} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={formData.contactPreferences[preference]}
-                        onChange={(e) => handleContactPreferenceChange(preference, e.target.checked)}
-                        className="mr-2 text-blue-600 focus:ring-blue-500"
-                      />
-                      {preference.replace('include', '').replace(/([A-Z])/g, ' $1').trim()}
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Special Situations */}
-              <div>
-                <label htmlFor="specialSituations" className="block text-sm font-medium text-gray-700">
-                  Special Situations
+                <label htmlFor="otherConsiderations" className="block text-sm font-medium text-gray-700">
+                  Other Considerations
                 </label>
                 <textarea
-                  id="specialSituations"
+                  id="otherConsiderations"
                   rows={3}
-                  value={formData.specialSituations}
-                  onChange={(e) => handleInputChange('specialSituations', e.target.value)}
+                  value={formData.otherConsiderations}
+                  onChange={(e) => handleInputChange('otherConsiderations', e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="How to handle complaints, mention of competitors, etc."
+                  placeholder="Anything else about your business that might help us answer reviews..."
                 />
               </div>
             </div>

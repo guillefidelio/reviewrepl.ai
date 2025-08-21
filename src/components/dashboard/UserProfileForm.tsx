@@ -112,117 +112,125 @@ export function UserProfileForm({ userProfile, onCancel, onSuccess }: UserProfil
   const isCreating = !userProfile;
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="w-full">
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* First Name */}
-          <div>
-            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-              First Name *
+        {/* Personal Information Section */}
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* First Name */}
+            <div>
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+                First Name *
+              </label>
+              <input
+                id="firstName"
+                type="text"
+                required
+                value={formData.firstName}
+                onChange={(e) => handleInputChange('firstName', e.target.value)}
+                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.firstName ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Enter your first name"
+              />
+              {errors.firstName && (
+                <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
+              )}
+            </div>
+
+            {/* Last Name */}
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+                Last Name *
+              </label>
+              <input
+                id="lastName"
+                type="text"
+                required
+                value={formData.lastName}
+                onChange={(e) => handleInputChange('lastName', e.target.value)}
+                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.lastName ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Enter your last name"
+              />
+              {errors.lastName && (
+                <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Email */}
+          <div className="mt-6">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              Email Address *
             </label>
             <input
-              id="firstName"
-              type="text"
+              id="email"
+              type="email"
               required
-              value={formData.firstName}
-              onChange={(e) => handleInputChange('firstName', e.target.value)}
+              value={formData.email}
+              onChange={(e) => handleInputChange('email', e.target.value)}
               className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                errors.firstName ? 'border-red-300' : 'border-gray-300'
+                errors.email ? 'border-red-300' : 'border-gray-300'
               }`}
-              placeholder="Enter your first name"
+              placeholder="Enter your email address"
             />
-            {errors.firstName && (
-              <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
             )}
           </div>
 
-          {/* Last Name */}
-          <div>
-            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-              Last Name *
+          {/* Phone */}
+          <div className="mt-6">
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+              Phone Number
             </label>
             <input
-              id="lastName"
-              type="text"
-              required
-              value={formData.lastName}
-              onChange={(e) => handleInputChange('lastName', e.target.value)}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                errors.lastName ? 'border-red-300' : 'border-gray-300'
-              }`}
-              placeholder="Enter your last name"
+              id="phone"
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter your phone number"
             />
-            {errors.lastName && (
-              <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
-            )}
           </div>
         </div>
 
-        {/* Email */}
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-            Email Address *
-          </label>
-          <input
-            id="email"
-            type="email"
-            required
-            value={formData.email}
-            onChange={(e) => handleInputChange('email', e.target.value)}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-              errors.email ? 'border-red-300' : 'border-gray-300'
-            }`}
-            placeholder="Enter your email address"
-          />
-          {errors.email && (
-            <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-          )}
-        </div>
+        {/* Professional Information Section */}
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Professional Information</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Company */}
+            <div>
+              <label htmlFor="company" className="block text-sm font-medium text-gray-700">
+                Company
+              </label>
+              <input
+                id="company"
+                type="text"
+                value={formData.company}
+                onChange={(e) => handleInputChange('company', e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter your company name"
+              />
+            </div>
 
-        {/* Phone */}
-        <div>
-          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-            Phone Number
-          </label>
-          <input
-            id="phone"
-            type="tel"
-            value={formData.phone}
-            onChange={(e) => handleInputChange('phone', e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Enter your phone number"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Company */}
-          <div>
-            <label htmlFor="company" className="block text-sm font-medium text-gray-700">
-              Company
-            </label>
-            <input
-              id="company"
-              type="text"
-              value={formData.company}
-              onChange={(e) => handleInputChange('company', e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter your company name"
-            />
-          </div>
-
-          {/* Position */}
-          <div>
-            <label htmlFor="position" className="block text-sm font-medium text-gray-700">
-              Position
-            </label>
-            <input
-              id="position"
-              type="text"
-              value={formData.position}
-              onChange={(e) => handleInputChange('position', e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter your job title"
-            />
+            {/* Position */}
+            <div>
+              <label htmlFor="position" className="block text-sm font-medium text-gray-700">
+                Position
+              </label>
+              <input
+                id="position"
+                type="text"
+                value={formData.position}
+                onChange={(e) => handleInputChange('position', e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter your job title"
+              />
+            </div>
           </div>
         </div>
 

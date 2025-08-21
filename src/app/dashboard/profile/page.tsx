@@ -184,9 +184,16 @@ export default function ProfilePage() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-2">Business Type</label>
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">Business Main Category</label>
                     <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
-                      {businessProfile.businessType || 'Not set'}
+                      {businessProfile.businessMainCategory || 'Not set'}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">Business Secondary Category</label>
+                    <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
+                      {businessProfile.businessSecondaryCategory || 'Not set'}
                     </p>
                   </div>
                   
@@ -248,6 +255,15 @@ export default function ProfilePage() {
                     </p>
                   </div>
                   
+                  {businessProfile.briefDescription && (
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-muted-foreground mb-2">Brief Description</label>
+                      <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
+                        {businessProfile.briefDescription}
+                      </p>
+                    </div>
+                  )}
+                  
                   {businessProfile.greetings && (
                     <div>
                       <label className="block text-sm font-medium text-muted-foreground mb-2">Greetings</label>
@@ -293,39 +309,11 @@ export default function ProfilePage() {
                     </div>
                   )}
                   
-                  {businessProfile.contactPreferences && (
+                  {businessProfile.otherConsiderations && (
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-muted-foreground mb-2">Contact Preferences</label>
-                      <div className="grid grid-cols-2 gap-4">
-                        {businessProfile.contactPreferences.includePhone && (
-                          <span className="text-sm text-card-foreground bg-green-100 text-green-800 px-3 py-1 rounded-md">
-                            Phone
-                          </span>
-                        )}
-                        {businessProfile.contactPreferences.includeEmail && (
-                          <span className="text-sm text-card-foreground bg-green-100 text-green-800 px-3 py-1 rounded-md">
-                            Email
-                          </span>
-                        )}
-                        {businessProfile.contactPreferences.includeWebsite && (
-                          <span className="text-sm text-card-foreground bg-green-100 text-green-800 px-3 py-1 rounded-md">
-                            Website
-                          </span>
-                        )}
-                        {businessProfile.contactPreferences.includeSocialMedia && (
-                          <span className="text-sm text-card-foreground bg-green-100 text-green-800 px-3 py-1 rounded-md">
-                            Social Media
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {businessProfile.specialSituations && (
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-muted-foreground mb-2">Special Situations</label>
+                      <label className="block text-sm font-medium text-muted-foreground mb-2">Other Considerations</label>
                       <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
-                        {businessProfile.specialSituations}
+                        {businessProfile.otherConsiderations}
                       </p>
                     </div>
                   )}

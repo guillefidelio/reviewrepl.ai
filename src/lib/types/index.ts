@@ -73,9 +73,11 @@ export interface BusinessProfile {
   
   // Essential Parameters
   businessName: string;
-  businessType: 'Restaurant' | 'Retail Store' | 'Medical/Healthcare' | 'Auto Service' | 'Beauty/Salon' | 'Professional Services' | 'Hotel/Lodging';
+  businessMainCategory: 'Restaurant' | 'Retail Store' | 'Medical/Healthcare' | 'Auto Service' | 'Beauty/Salon' | 'Professional Services' | 'Hotel/Lodging';
+  businessSecondaryCategory: string;
   businessTags: string[];
   mainProductsServices: string;
+  briefDescription: string;
   country: string;
   stateProvince: string;
   language: 'English' | 'Spanish' | 'French' | 'German' | 'Italian' | 'Portuguese' | 'Other';
@@ -90,13 +92,7 @@ export interface BusinessProfile {
   
   // Advanced Options
   brandVoiceNotes: string;
-  contactPreferences: {
-    includePhone: boolean;
-    includeEmail: boolean;
-    includeWebsite: boolean;
-    includeSocialMedia: boolean;
-  };
-  specialSituations: string;
+  otherConsiderations: string;
   
   createdAt: Date;
   updatedAt: Date;
@@ -106,9 +102,11 @@ export interface BusinessProfile {
 export interface BusinessProfileFormData {
   // Essential Parameters
   businessName: string;
-  businessType: 'Restaurant' | 'Retail Store' | 'Medical/Healthcare' | 'Auto Service' | 'Beauty/Salon' | 'Professional Services' | 'Hotel/Lodging';
+  businessMainCategory: 'Restaurant' | 'Retail Store' | 'Medical/Healthcare' | 'Auto Service' | 'Beauty/Salon' | 'Professional Services' | 'Hotel/Lodging';
+  businessSecondaryCategory: string;
   businessTags: string[];
   mainProductsServices: string;
+  briefDescription: string;
   country: string;
   stateProvince: string;
   language: 'English' | 'Spanish' | 'French' | 'German' | 'Italian' | 'Portuguese' | 'Other';
@@ -123,13 +121,7 @@ export interface BusinessProfileFormData {
   
   // Advanced Options
   brandVoiceNotes: string;
-  contactPreferences: {
-    includePhone: boolean;
-    includeEmail: boolean;
-    includeWebsite: boolean;
-    includeSocialMedia: boolean;
-  };
-  specialSituations: string;
+  otherConsiderations: string;
 }
 
 // Business profile operation states
