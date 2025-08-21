@@ -182,43 +182,151 @@ export default function ProfilePage() {
                       {businessProfile.businessName || 'Not set'}
                     </p>
                   </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-muted-foreground mb-2">Product/Service</label>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">Business Type</label>
                     <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
-                      {businessProfile.productService || 'Not set'}
+                      {businessProfile.businessType || 'Not set'}
                     </p>
                   </div>
-                  {businessProfile.description && (
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">Language</label>
+                    <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
+                      {businessProfile.language || 'Not set'}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">Country</label>
+                    <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
+                      {businessProfile.country || 'Not set'}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">State/Province</label>
+                    <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
+                      {businessProfile.stateProvince || 'Not set'}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">Response Tone</label>
+                    <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
+                      {businessProfile.responseTone || 'Not set'}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">Response Length</label>
+                    <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
+                      {businessProfile.responseLength || 'Not set'}
+                    </p>
+                  </div>
+                  
+                  {businessProfile.businessTags && businessProfile.businessTags.length > 0 && (
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-muted-foreground mb-2">Description</label>
+                      <label className="block text-sm font-medium text-muted-foreground mb-2">Business Tags</label>
+                      <div className="flex flex-wrap gap-2">
+                        {businessProfile.businessTags.map((tag, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-muted-foreground mb-2">Main Products or Services</label>
+                    <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
+                      {businessProfile.mainProductsServices || 'Not set'}
+                    </p>
+                  </div>
+                  
+                  {businessProfile.greetings && (
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-2">Greetings</label>
                       <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
-                        {businessProfile.description}
+                        {businessProfile.greetings}
                       </p>
                     </div>
                   )}
-                  <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-2">Industry</label>
-                    <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
-                      {businessProfile.industry || 'Not set'}
-                    </p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-2">Location</label>
-                    <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
-                      {businessProfile.location || 'Not set'}
-                    </p>
-                  </div>
-                  {businessProfile.website && (
+                  
+                  {businessProfile.signatures && (
+                    <div>
+                      <label className="block text-sm font-medium text-muted-foreground mb-2">Signatures</label>
+                      <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
+                        {businessProfile.signatures}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {businessProfile.positiveReviewCTA && (
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-muted-foreground mb-2">Website</label>
-                      <a
-                        href={businessProfile.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:text-blue-500 bg-muted/50 px-3 py-2 rounded-md block"
-                      >
-                        {businessProfile.website}
-                      </a>
+                      <label className="block text-sm font-medium text-muted-foreground mb-2">Positive Review Call to Action</label>
+                      <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
+                        {businessProfile.positiveReviewCTA}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {businessProfile.negativeReviewEscalation && (
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-muted-foreground mb-2">Negative Review Escalation</label>
+                      <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
+                        {businessProfile.negativeReviewEscalation}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {businessProfile.brandVoiceNotes && (
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-muted-foreground mb-2">Brand Voice Notes</label>
+                      <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
+                        {businessProfile.brandVoiceNotes}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {businessProfile.contactPreferences && (
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-muted-foreground mb-2">Contact Preferences</label>
+                      <div className="grid grid-cols-2 gap-4">
+                        {businessProfile.contactPreferences.includePhone && (
+                          <span className="text-sm text-card-foreground bg-green-100 text-green-800 px-3 py-1 rounded-md">
+                            Phone
+                          </span>
+                        )}
+                        {businessProfile.contactPreferences.includeEmail && (
+                          <span className="text-sm text-card-foreground bg-green-100 text-green-800 px-3 py-1 rounded-md">
+                            Email
+                          </span>
+                        )}
+                        {businessProfile.contactPreferences.includeWebsite && (
+                          <span className="text-sm text-card-foreground bg-green-100 text-green-800 px-3 py-1 rounded-md">
+                            Website
+                          </span>
+                        )}
+                        {businessProfile.contactPreferences.includeSocialMedia && (
+                          <span className="text-sm text-card-foreground bg-green-100 text-green-800 px-3 py-1 rounded-md">
+                            Social Media
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {businessProfile.specialSituations && (
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-muted-foreground mb-2">Special Situations</label>
+                      <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
+                        {businessProfile.specialSituations}
+                      </p>
                     </div>
                   )}
                 </div>

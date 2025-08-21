@@ -16,27 +16,64 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
   const { createBusinessProfile, updateBusinessProfile, loading } = useBusinessProfile(user?.uid || '');
   
   const [formData, setFormData] = useState<BusinessProfileFormData>({
+    // Essential Parameters
     businessName: '',
-    productService: '',
-    description: '',
-    industry: '',
-    website: '',
-    location: '',
+    businessType: 'Restaurant',
+    businessTags: [],
+    mainProductsServices: '',
+    country: '',
+    stateProvince: '',
+    language: 'English',
+    responseTone: 'Professional',
+    
+    // Useful Secondary Parameters
+    responseLength: 'Standard',
+    greetings: '',
+    signatures: '',
+    positiveReviewCTA: '',
+    negativeReviewEscalation: '',
+    
+    // Advanced Options
+    brandVoiceNotes: '',
+    contactPreferences: {
+      includePhone: false,
+      includeEmail: false,
+      includeWebsite: false,
+      includeSocialMedia: false,
+    },
+    specialSituations: '',
   });
 
   const [errors, setErrors] = useState<Partial<BusinessProfileFormData>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [tagInput, setTagInput] = useState('');
 
   // Initialize form with existing data if editing
   useEffect(() => {
     if (businessProfile) {
       setFormData({
         businessName: businessProfile.businessName || '',
-        productService: businessProfile.productService || '',
-        description: businessProfile.description || '',
-        industry: businessProfile.industry || '',
-        website: businessProfile.website || '',
-        location: businessProfile.location || '',
+        businessType: businessProfile.businessType || 'Restaurant',
+        businessTags: businessProfile.businessTags || [],
+        mainProductsServices: businessProfile.mainProductsServices || '',
+        country: businessProfile.country || '',
+        stateProvince: businessProfile.stateProvince || '',
+        language: businessProfile.language || 'English',
+        responseTone: businessProfile.responseTone || 'Professional',
+        responseLength: businessProfile.responseLength || 'Standard',
+        greetings: businessProfile.greetings || '',
+        signatures: businessProfile.signatures || '',
+        positiveReviewCTA: businessProfile.positiveReviewCTA || '',
+        negativeReviewEscalation: businessProfile.negativeReviewEscalation || '',
+        brandVoiceNotes: businessProfile.brandVoiceNotes || '',
+        contactPreferences: businessProfile.contactPreferences || {
+          includePhone: false,
+          includeEmail: false,
+          includeWebsite: false,
+          includeSocialMedia: false,
+        },
+        specialSituations: businessProfile.specialSituations || '',
       });
     }
   }, [businessProfile]);
@@ -49,27 +86,20 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
       newErrors.businessName = 'Business name is required';
     }
 
-    if (!formData.productService.trim()) {
-      newErrors.productService = 'Product/Service description is required';
+    if (!formData.mainProductsServices.trim()) {
+      newErrors.mainProductsServices = 'Main products or services is required';
     }
 
-    // Validate website URL if provided
-    if (formData.website && !isValidUrl(formData.website)) {
-      newErrors.website = 'Please enter a valid URL';
+    if (!formData.country.trim()) {
+      newErrors.country = 'Country is required';
+    }
+
+    if (!formData.stateProvince.trim()) {
+      newErrors.stateProvince = 'State/Province is required';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
-
-  // Simple URL validation
-  const isValidUrl = (url: string): boolean => {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
   };
 
   // Handle form submission
@@ -84,144 +114,409 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
 
     try {
       if (businessProfile) {
-        // Update existing business profile
         await updateBusinessProfile(businessProfile.uid, formData);
       } else {
-        // Create new business profile
         await createBusinessProfile(formData);
       }
-      // The real-time subscription will automatically update the state
-      onSuccess(); // Call success callback after successful create/update
+      onSuccess();
     } catch (error) {
       console.error('Error saving business profile:', error);
-      // Error is handled by the hook and displayed in parent
     } finally {
       setIsSubmitting(false);
     }
   };
 
   // Handle input changes
-  const handleInputChange = (field: keyof BusinessProfileFormData, value: string) => {
+  const handleInputChange = (field: keyof BusinessProfileFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Clear error for this field when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
+  };
+
+  // Handle contact preferences changes
+  const handleContactPreferenceChange = (preference: keyof typeof formData.contactPreferences, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      contactPreferences: {
+        ...prev.contactPreferences,
+        [preference]: checked,
+      }
+    }));
+  };
+
+  // Handle tag management
+  const addTag = () => {
+    if (tagInput.trim() && !formData.businessTags.includes(tagInput.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        businessTags: [...prev.businessTags, tagInput.trim()]
+      }));
+      setTagInput('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setFormData(prev => ({
+      ...prev,
+      businessTags: prev.businessTags.filter(tag => tag !== tagToRemove)
+    }));
   };
 
   const isFormDisabled = isSubmitting || loading;
   const isCreating = !businessProfile;
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Business Name */}
-        <div>
-          <label htmlFor="businessName" className="block text-sm font-medium text-gray-700">
-            Business Name *
-          </label>
-          <input
-            id="businessName"
-            type="text"
-            required
-            value={formData.businessName}
-            onChange={(e) => handleInputChange('businessName', e.target.value)}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-              errors.businessName ? 'border-red-300' : 'border-gray-300'
-            }`}
-            placeholder="Enter your business name"
-          />
-          {errors.businessName && (
-            <p className="mt-1 text-sm text-red-600">{errors.businessName}</p>
-          )}
-        </div>
+    <div className="max-w-4xl mx-auto">
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Essential Parameters Section */}
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Essential Parameters</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Business Name */}
+            <div className="md:col-span-2">
+              <label htmlFor="businessName" className="block text-sm font-medium text-gray-700">
+                Business Name *
+              </label>
+              <input
+                id="businessName"
+                type="text"
+                required
+                value={formData.businessName}
+                onChange={(e) => handleInputChange('businessName', e.target.value)}
+                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.businessName ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Enter your business name"
+              />
+              {errors.businessName && (
+                <p className="mt-1 text-sm text-red-600">{errors.businessName}</p>
+              )}
+            </div>
 
-        {/* Product/Service */}
-        <div>
-          <label htmlFor="productService" className="block text-sm font-medium text-gray-700">
-            Product/Service *
-          </label>
-          <input
-            id="productService"
-            type="text"
-            required
-            value={formData.productService}
-            onChange={(e) => handleInputChange('productService', e.target.value)}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-              errors.productService ? 'border-red-300' : 'border-gray-300'
-            }`}
-            placeholder="What does your business do?"
-          />
-          {errors.productService && (
-            <p className="mt-1 text-sm text-red-600">{errors.productService}</p>
-          )}
-        </div>
+            {/* Business Type */}
+            <div>
+              <label htmlFor="businessType" className="block text-sm font-medium text-gray-700">
+                Business Type *
+              </label>
+              <select
+                id="businessType"
+                required
+                value={formData.businessType}
+                onChange={(e) => handleInputChange('businessType', e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="Restaurant">Restaurant</option>
+                <option value="Retail Store">Retail Store</option>
+                <option value="Medical/Healthcare">Medical/Healthcare</option>
+                <option value="Auto Service">Auto Service</option>
+                <option value="Beauty/Salon">Beauty/Salon</option>
+                <option value="Professional Services">Professional Services</option>
+                <option value="Hotel/Lodging">Hotel/Lodging</option>
+              </select>
+            </div>
 
-        {/* Description */}
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-            Business Description
-          </label>
-          <textarea
-            id="description"
-            rows={3}
-            value={formData.description}
-            onChange={(e) => handleInputChange('description', e.target.value)}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Describe your business, mission, and what makes you unique"
-          />
-        </div>
+            {/* Language */}
+            <div>
+              <label htmlFor="language" className="block text-sm font-medium text-gray-700">
+                Language *
+              </label>
+              <select
+                id="language"
+                required
+                value={formData.language}
+                onChange={(e) => handleInputChange('language', e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="English">English</option>
+                <option value="Spanish">Spanish</option>
+                <option value="French">French</option>
+                <option value="German">German</option>
+                <option value="Italian">Italian</option>
+                <option value="Portuguese">Portuguese</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Industry */}
-          <div>
-            <label htmlFor="industry" className="block text-sm font-medium text-gray-700">
-              Industry
-            </label>
-            <input
-              id="industry"
-              type="text"
-              value={formData.industry}
-              onChange={(e) => handleInputChange('industry', e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="e.g., Technology, Healthcare, Retail"
-            />
+            {/* Country */}
+            <div>
+              <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+                Country *
+              </label>
+              <input
+                id="country"
+                type="text"
+                required
+                value={formData.country}
+                onChange={(e) => handleInputChange('country', e.target.value)}
+                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.country ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="e.g., United States"
+              />
+              {errors.country && (
+                <p className="mt-1 text-sm text-red-600">{errors.country}</p>
+              )}
+            </div>
+
+            {/* State/Province */}
+            <div>
+              <label htmlFor="stateProvince" className="block text-sm font-medium text-gray-700">
+                State/Province *
+              </label>
+              <input
+                id="stateProvince"
+                type="text"
+                required
+                value={formData.stateProvince}
+                onChange={(e) => handleInputChange('stateProvince', e.target.value)}
+                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.stateProvince ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="e.g., California"
+              />
+              {errors.stateProvince && (
+                <p className="mt-1 text-sm text-red-600">{errors.stateProvince}</p>
+              )}
+            </div>
+
+            {/* Response Tone */}
+            <div>
+              <label htmlFor="responseTone" className="block text-sm font-medium text-gray-700">
+                Response Tone *
+              </label>
+              <select
+                id="responseTone"
+                required
+                value={formData.responseTone}
+                onChange={(e) => handleInputChange('responseTone', e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="Professional">Professional</option>
+                <option value="Friendly">Friendly</option>
+                <option value="Casual">Casual</option>
+                <option value="Formal">Formal</option>
+              </select>
+            </div>
+
+            {/* Business Tags */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Business Tags
+              </label>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  placeholder="Add a tag and press Enter"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                />
+                <button
+                  type="button"
+                  onClick={addTag}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Add
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {formData.businessTags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => removeTag(tag)}
+                      className="ml-2 text-blue-600 hover:text-blue-800"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Main Products or Services */}
+            <div className="md:col-span-2">
+              <label htmlFor="mainProductsServices" className="block text-sm font-medium text-gray-700">
+                Main Products or Services You Sell *
+              </label>
+              <textarea
+                id="mainProductsServices"
+                rows={3}
+                required
+                value={formData.mainProductsServices}
+                onChange={(e) => handleInputChange('mainProductsServices', e.target.value)}
+                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.mainProductsServices ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Describe your main products or services..."
+              />
+              {errors.mainProductsServices && (
+                <p className="mt-1 text-sm text-red-600">{errors.mainProductsServices}</p>
+              )}
+            </div>
           </div>
+        </div>
 
-          {/* Location */}
-          <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-700">
-              Location
-            </label>
-            <input
-              id="location"
-              type="text"
-              value={formData.location}
-              onChange={(e) => handleInputChange('location', e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="City, State or Remote"
-            />
+        {/* Useful Secondary Parameters Section */}
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Useful Secondary Parameters</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Response Length */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Response Length
+              </label>
+              <div className="space-y-2">
+                {(['Brief', 'Standard', 'Detailed'] as const).map((length) => (
+                  <label key={length} className="flex items-center">
+                    <input
+                      type="radio"
+                      name="responseLength"
+                      value={length}
+                      checked={formData.responseLength === length}
+                      onChange={(e) => handleInputChange('responseLength', e.target.value)}
+                      className="mr-2 text-blue-600 focus:ring-blue-500"
+                    />
+                    {length}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Greetings */}
+            <div>
+              <label htmlFor="greetings" className="block text-sm font-medium text-gray-700">
+                Greetings
+              </label>
+              <input
+                id="greetings"
+                type="text"
+                value={formData.greetings}
+                onChange={(e) => handleInputChange('greetings', e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., Thank you for your review"
+              />
+            </div>
+
+            {/* Signatures */}
+            <div>
+              <label htmlFor="signatures" className="block text-sm font-medium text-gray-700">
+                Signatures
+              </label>
+              <input
+                id="signatures"
+                type="text"
+                value={formData.signatures}
+                onChange={(e) => handleInputChange('signatures', e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., Best regards, [Business Name]"
+              />
+            </div>
+
+            {/* Positive Review CTA */}
+            <div className="md:col-span-2">
+              <label htmlFor="positiveReviewCTA" className="block text-sm font-medium text-gray-700">
+                Positive Review Call to Action
+              </label>
+              <textarea
+                id="positiveReviewCTA"
+                rows={2}
+                value={formData.positiveReviewCTA}
+                onChange={(e) => handleInputChange('positiveReviewCTA', e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., Invite customers back, follow on social media, test new products..."
+              />
+            </div>
+
+            {/* Negative Review Escalation */}
+            <div className="md:col-span-2">
+              <label htmlFor="negativeReviewEscalation" className="block text-sm font-medium text-gray-700">
+                Negative Review Escalation Procedure
+              </label>
+              <textarea
+                id="negativeReviewEscalation"
+                rows={2}
+                value={formData.negativeReviewEscalation}
+                onChange={(e) => handleInputChange('negativeReviewEscalation', e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., How to handle complaints, mention of competitors, etc."
+              />
+            </div>
           </div>
         </div>
 
-        {/* Website */}
-        <div>
-          <label htmlFor="website" className="block text-sm font-medium text-gray-700">
-            Website
-          </label>
-          <input
-            id="website"
-            type="url"
-            value={formData.website}
-            onChange={(e) => handleInputChange('website', e.target.value)}
-            className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-              errors.website ? 'border-red-300' : 'border-gray-300'
-            }`}
-            placeholder="https://yourbusiness.com"
-          />
-          {errors.website && (
-            <p className="mt-1 text-sm text-red-600">{errors.website}</p>
+        {/* Advanced Options Section */}
+        <div className="bg-white p-6 rounded-lg border border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Advanced Options</h3>
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              className="text-sm text-blue-600 hover:text-blue-800 focus:outline-none"
+            >
+              {showAdvanced ? 'Hide' : 'Show'} Advanced Options
+            </button>
+          </div>
+          
+          {showAdvanced && (
+            <div className="space-y-6">
+              {/* Brand Voice Notes */}
+              <div>
+                <label htmlFor="brandVoiceNotes" className="block text-sm font-medium text-gray-700">
+                  Brand Voice Notes
+                </label>
+                <textarea
+                  id="brandVoiceNotes"
+                  rows={3}
+                  value={formData.brandVoiceNotes}
+                  onChange={(e) => handleInputChange('brandVoiceNotes', e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Specific phrases, policies, or approaches the business wants to maintain..."
+                />
+              </div>
+
+              {/* Contact Preferences */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contact Preferences
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  {(['includePhone', 'includeEmail', 'includeWebsite', 'includeSocialMedia'] as const).map((preference) => (
+                    <label key={preference} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={formData.contactPreferences[preference]}
+                        onChange={(e) => handleContactPreferenceChange(preference, e.target.checked)}
+                        className="mr-2 text-blue-600 focus:ring-blue-500"
+                      />
+                      {preference.replace('include', '').replace(/([A-Z])/g, ' $1').trim()}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Special Situations */}
+              <div>
+                <label htmlFor="specialSituations" className="block text-sm font-medium text-gray-700">
+                  Special Situations
+                </label>
+                <textarea
+                  id="specialSituations"
+                  rows={3}
+                  value={formData.specialSituations}
+                  onChange={(e) => handleInputChange('specialSituations', e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="How to handle complaints, mention of competitors, etc."
+                />
+              </div>
+            </div>
           )}
         </div>
 

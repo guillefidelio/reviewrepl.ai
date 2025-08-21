@@ -29,18 +29,33 @@ export function useBusinessProfile(userId: string) {
     // Subscribe to real-time updates
     const unsubscribe = onSnapshot(
       doc(db, 'users', userId, 'businessProfiles', userId), // Using userId as document ID
-      (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
+      (docSnapshot) => {
+        if (docSnapshot.exists()) {
+          const data = docSnapshot.data();
           const businessProfile: BusinessProfile = {
-            uid: docSnap.id,
+            uid: docSnapshot.id,
             userId: userId,
             businessName: data.businessName || '',
-            productService: data.productService || '',
-            description: data.description || '',
-            industry: data.industry || '',
-            website: data.website || '',
-            location: data.location || '',
+            businessType: data.businessType || 'Restaurant',
+            businessTags: data.businessTags || [],
+            mainProductsServices: data.mainProductsServices || '',
+            country: data.country || '',
+            stateProvince: data.stateProvince || '',
+            language: data.language || 'English',
+            responseTone: data.responseTone || 'Professional',
+            responseLength: data.responseLength || 'Standard',
+            greetings: data.greetings || '',
+            signatures: data.signatures || '',
+            positiveReviewCTA: data.positiveReviewCTA || '',
+            negativeReviewEscalation: data.negativeReviewEscalation || '',
+            brandVoiceNotes: data.brandVoiceNotes || '',
+            contactPreferences: data.contactPreferences || {
+              includePhone: false,
+              includeEmail: false,
+              includeWebsite: false,
+              includeSocialMedia: false,
+            },
+            specialSituations: data.specialSituations || '',
             createdAt: data.createdAt?.toDate() || new Date(),
             updatedAt: data.updatedAt?.toDate() || new Date(),
           };
@@ -131,7 +146,22 @@ export function useBusinessProfile(userId: string) {
       const businessProfile: BusinessProfile = {
         uid: userId,
         userId: userId,
-        ...formData,
+        businessName: formData.businessName,
+        businessType: formData.businessType,
+        businessTags: formData.businessTags,
+        mainProductsServices: formData.mainProductsServices,
+        country: formData.country,
+        stateProvince: formData.stateProvince,
+        language: formData.language,
+        responseTone: formData.responseTone,
+        responseLength: formData.responseLength,
+        greetings: formData.greetings,
+        signatures: formData.signatures,
+        positiveReviewCTA: formData.positiveReviewCTA,
+        negativeReviewEscalation: formData.negativeReviewEscalation,
+        brandVoiceNotes: formData.brandVoiceNotes,
+        contactPreferences: formData.contactPreferences,
+        specialSituations: formData.specialSituations,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

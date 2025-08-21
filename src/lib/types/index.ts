@@ -70,24 +70,66 @@ export interface UserProfileHookReturn extends UserProfileState {
 export interface BusinessProfile {
   uid: string;
   userId: string;
+  
+  // Essential Parameters
   businessName: string;
-  productService: string;
-  description?: string;
-  industry?: string;
-  website?: string;
-  location?: string;
+  businessType: 'Restaurant' | 'Retail Store' | 'Medical/Healthcare' | 'Auto Service' | 'Beauty/Salon' | 'Professional Services' | 'Hotel/Lodging';
+  businessTags: string[];
+  mainProductsServices: string;
+  country: string;
+  stateProvince: string;
+  language: 'English' | 'Spanish' | 'French' | 'German' | 'Italian' | 'Portuguese' | 'Other';
+  responseTone: 'Professional' | 'Friendly' | 'Casual' | 'Formal';
+  
+  // Useful Secondary Parameters
+  responseLength: 'Brief' | 'Standard' | 'Detailed';
+  greetings: string;
+  signatures: string;
+  positiveReviewCTA: string;
+  negativeReviewEscalation: string;
+  
+  // Advanced Options
+  brandVoiceNotes: string;
+  contactPreferences: {
+    includePhone: boolean;
+    includeEmail: boolean;
+    includeWebsite: boolean;
+    includeSocialMedia: boolean;
+  };
+  specialSituations: string;
+  
   createdAt: Date;
   updatedAt: Date;
 }
 
 // Business profile form data (for create/update operations)
 export interface BusinessProfileFormData {
+  // Essential Parameters
   businessName: string;
-  productService: string;
-  description?: string;
-  industry?: string;
-  website?: string;
-  location?: string;
+  businessType: 'Restaurant' | 'Retail Store' | 'Medical/Healthcare' | 'Auto Service' | 'Beauty/Salon' | 'Professional Services' | 'Hotel/Lodging';
+  businessTags: string[];
+  mainProductsServices: string;
+  country: string;
+  stateProvince: string;
+  language: 'English' | 'Spanish' | 'French' | 'German' | 'Italian' | 'Portuguese' | 'Other';
+  responseTone: 'Professional' | 'Friendly' | 'Casual' | 'Formal';
+  
+  // Useful Secondary Parameters
+  responseLength: 'Brief' | 'Standard' | 'Detailed';
+  greetings: string;
+  signatures: string;
+  positiveReviewCTA: string;
+  negativeReviewEscalation: string;
+  
+  // Advanced Options
+  brandVoiceNotes: string;
+  contactPreferences: {
+    includePhone: boolean;
+    includeEmail: boolean;
+    includeWebsite: boolean;
+    includeSocialMedia: boolean;
+  };
+  specialSituations: string;
 }
 
 // Business profile operation states
