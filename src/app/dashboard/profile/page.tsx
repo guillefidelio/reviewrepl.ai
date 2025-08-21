@@ -96,25 +96,25 @@ export default function ProfilePage() {
                     {userProfile?.lastName || 'Not set'}
                   </p>
                 </div>
-                <div className="md:col-span-2">
+                <div>
                   <label className="block text-sm font-medium text-muted-foreground mb-2">Email Address</label>
                   <p className="text-sm text-card-foreground text-muted-foreground bg-muted/50 px-3 py-2 rounded-md">
                     {user.email} (cannot be changed)
                   </p>
                 </div>
-                <div className="md:col-span-2">
+                <div>
                   <label className="block text-sm font-medium text-muted-foreground mb-2">Phone Number</label>
                   <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
                     {userProfile?.phone || 'Not set'}
                   </p>
                 </div>
-                <div className="md:col-span-2">
+                <div>
                   <label className="block text-sm font-medium text-muted-foreground mb-2">Company</label>
                   <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
                     {userProfile?.company || 'Not set'}
                   </p>
                 </div>
-                <div className="md:col-span-2">
+                <div>
                   <label className="block text-sm font-medium text-muted-foreground mb-2">Position</label>
                   <p className="text-sm text-card-foreground bg-muted/50 px-3 py-2 rounded-md">
                     {userProfile?.position || 'Not set'}
