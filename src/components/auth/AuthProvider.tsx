@@ -55,16 +55,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const data = docSnapshot.data();
           const profile: UserProfile = {
             uid: docSnapshot.id,
-            userId: docSnapshot.id, // Add missing userId field
+            userId: docSnapshot.id,
+            firstName: data.firstName || data.displayName || '',
+            lastName: data.lastName || '',
             email: data.email,
-            displayName: data.displayName,
-            phone: data.phone || data.phoneNumber || '', // Handle both property names
-            avatar: data.avatar || data.photoURL || '', // Handle both property names
-            bio: data.bio || '',
-            location: data.location || '',
-            website: data.website || '',
+            phone: data.phone || data.phoneNumber || '',
             company: data.company || '',
-            jobTitle: data.jobTitle || '',
+            position: data.position || data.jobTitle || '',
+            credits: data.credits ? {
+              available: data.credits.available || 0,
+              total: data.credits.total || 0,
+              lastUpdated: data.credits.lastUpdated?.toDate() || new Date(),
+            } : undefined,
             answeringMode: data.answeringMode ? {
               selectedMode: data.answeringMode.selectedMode || 'simple',
               lastUpdated: data.answeringMode.lastUpdated?.toDate() || new Date(),

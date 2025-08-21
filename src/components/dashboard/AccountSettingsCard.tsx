@@ -2,8 +2,25 @@
 
 import { Settings } from 'lucide-react';
 import Link from 'next/link';
+import { useCredits } from '@/lib/hooks/useCredits';
+import { useAuth } from '@/lib/hooks/useAuth';
 
 export function AccountSettingsCard() {
+  const { user } = useAuth();
+  const { balance, loading: creditsLoading } = useCredits(user?.uid);
+
+  // Determine plan based on credits
+  const getPlanInfo = () => {
+    if (creditsLoading) return { name: 'Loading...', status: 'loading' };
+    
+    if (balance.total >= 100) return { name: 'Professional', status: 'active' };
+    if (balance.total >= 50) return { name: 'Starter', status: 'active' };
+    if (balance.total >= 10) return { name: 'Free', status: 'active' };
+    return { name: 'Free', status: 'active' };
+  };
+
+  const planInfo = getPlanInfo();
+
   return (
     <div className="bg-card overflow-hidden shadow rounded-lg border border-border">
       <div className="px-4 py-5 sm:p-6">
@@ -22,10 +39,14 @@ export function AccountSettingsCard() {
           <div className="flex items-center justify-between">
             <div>
               <div className="font-medium text-card-foreground">Current Plan</div>
-              <div className="text-sm text-muted-foreground">Free Plan</div>
+              <div className="text-sm text-muted-foreground">{planInfo.name} Plan</div>
             </div>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              Active
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+              planInfo.status === 'loading' 
+                ? 'bg-gray-100 text-gray-800' 
+                : 'bg-green-100 text-green-800'
+            }`}>
+              {planInfo.status === 'loading' ? 'Loading' : 'Active'}
             </span>
           </div>
         </div>

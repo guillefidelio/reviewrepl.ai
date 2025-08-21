@@ -1,9 +1,9 @@
 'use client';
 
-import Image from 'next/image';
+
 import { useAuth } from '@/lib/hooks/useAuth';
 import { useUserProfile } from '@/lib/hooks/useUserProfile';
-import { UserProfileForm } from './UserProfileForm';
+import { UserProfileForm } from '../dashboard/UserProfileForm';
 
 export function UserProfile() {
   const { user } = useAuth();
@@ -70,7 +70,7 @@ export function UserProfile() {
   }
 
   if (isEditing) {
-    return <UserProfileForm userProfile={userProfile} onCancel={toggleEditMode} />;
+    return <UserProfileForm userProfile={userProfile} onCancel={toggleEditMode} onSuccess={toggleEditMode} />;
   }
 
   if (!userProfile) {
@@ -108,27 +108,16 @@ export function UserProfile() {
       </div>
 
       <div className="space-y-4">
-        {/* Avatar Display (Read-only) */}
-        {userProfile.avatar && (
-          <div className="flex items-center space-x-4">
-            <Image
-              src={userProfile.avatar}
-              alt="Profile avatar"
-              width={64}
-              height={64}
-              className="h-16 w-16 rounded-full object-cover"
-            />
-            <div>
-              <p className="text-sm text-gray-500">Profile Picture</p>
-              <p className="text-xs text-gray-400">Avatar cannot be changed from this form</p>
-            </div>
-          </div>
-        )}
-
-        {/* Display Name */}
+        {/* First Name */}
         <div>
-          <label className="block text-sm font-medium text-gray-700">Display Name</label>
-          <p className="mt-1 text-sm text-gray-900">{userProfile.displayName || 'Not provided'}</p>
+          <label className="block text-sm font-medium text-gray-700">First Name</label>
+          <p className="mt-1 text-sm text-gray-900">{userProfile.firstName || 'Not provided'}</p>
+        </div>
+
+        {/* Last Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Last Name</label>
+          <p className="mt-1 text-sm text-gray-900">{userProfile.lastName || 'Not provided'}</p>
         </div>
 
         {/* Email */}
@@ -137,42 +126,11 @@ export function UserProfile() {
           <p className="mt-1 text-sm text-gray-900">{userProfile.email || 'Not provided'}</p>
         </div>
 
-        {/* Bio */}
-        {userProfile.bio && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Bio</label>
-            <p className="mt-1 text-sm text-gray-900">{userProfile.bio}</p>
-          </div>
-        )}
-
         {/* Phone */}
         {userProfile.phone && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Phone</label>
             <p className="mt-1 text-sm text-gray-900">{userProfile.phone}</p>
-          </div>
-        )}
-
-        {/* Location */}
-        {userProfile.location && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Location</label>
-            <p className="mt-1 text-sm text-gray-900">{userProfile.location}</p>
-          </div>
-        )}
-
-        {/* Website */}
-        {userProfile.website && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Website</label>
-            <a
-              href={userProfile.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1 text-sm text-blue-600 hover:text-blue-500"
-            >
-              {userProfile.website}
-            </a>
           </div>
         )}
 
@@ -184,11 +142,11 @@ export function UserProfile() {
           </div>
         )}
 
-        {/* Job Title */}
-        {userProfile.jobTitle && (
+        {/* Position */}
+        {userProfile.position && (
           <div>
-            <label className="block text-sm font-medium text-gray-700">Job Title</label>
-            <p className="mt-1 text-sm text-gray-900">{userProfile.jobTitle}</p>
+            <label className="block text-sm font-medium text-gray-700">Position</label>
+            <p className="mt-1 text-sm text-gray-900">{userProfile.position}</p>
           </div>
         )}
 

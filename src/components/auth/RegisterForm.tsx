@@ -48,9 +48,11 @@ export function RegisterForm() {
       // Create user profile in Firestore
       const profileData = {
         email: user.email || email,
-        displayName: displayName || user.displayName || '',
-        phoneNumber: phoneNumber || user.phoneNumber || '',
-        photoURL: user.photoURL || '',
+        firstName: displayName || user.displayName || '',
+        lastName: '',
+        phone: phoneNumber || user.phoneNumber || '',
+        company: '',
+        position: '',
       };
       
       // Import and use the Firestore functions directly
@@ -64,6 +66,11 @@ export function RegisterForm() {
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
         ...profileData,
+        credits: {
+          available: 10, // Free tier credits
+          total: 10,
+          lastUpdated: Timestamp.now(),
+        },
         createdAt: Timestamp.now(),
         updatedAt: Timestamp.now(),
       });

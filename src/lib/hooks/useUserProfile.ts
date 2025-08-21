@@ -1,22 +1,24 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { doc, updateDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { useState, useEffect, useCallback } from 'react';
+import { doc, setDoc, updateDoc, onSnapshot, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { UserProfile, UserProfileFormData, UserProfileState, UserProfileHookReturn } from '@/lib/types';
+import { UserProfile, UserProfileFormData } from '@/lib/types';
 
-export function useUserProfile(userId: string): UserProfileHookReturn {
-  const [state, setState] = useState<UserProfileState>({
+export function useUserProfile(userId: string) {
+  const [state, setState] = useState<{
+    data: UserProfile | null;
+    loading: boolean;
+    error: string | null;
+    isEditing: boolean;
+  }>({
     data: null,
     loading: true,
     error: null,
-    isEditing: false
+    isEditing: false,
   });
 
-  const stateRef = useRef(state);
-  stateRef.current = state;
-
-  // Real-time subscription to user profile
+  // Fetch user profile from Firestore
   useEffect(() => {
     if (!userId || !db) {
       setState(prev => ({ ...prev, loading: false, data: null }));
@@ -25,25 +27,31 @@ export function useUserProfile(userId: string): UserProfileHookReturn {
 
     setState(prev => ({ ...prev, loading: true, error: null }));
 
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates from the main users collection
     const unsubscribe = onSnapshot(
-      doc(db, 'users', userId, 'userprofile', userId), // Using userId as document ID
+      doc(db, 'users', userId),
       (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
           const userProfile: UserProfile = {
             uid: docSnap.id,
             userId: userId,
-            displayName: data.displayName || '',
+            firstName: data.firstName || data.displayName || '',
+            lastName: data.lastName || '',
             email: data.email || '',
-            bio: data.bio || '',
-            phone: data.phone || '',
-            location: data.location || '',
-            website: data.website || '',
+            phone: data.phone || data.phoneNumber || '',
             company: data.company || '',
-            jobTitle: data.jobTitle || '',
-            avatar: data.avatar || '',
-            answeringMode: data.answeringMode || {
+            position: data.position || data.jobTitle || '',
+            credits: data.credits ? {
+              available: data.credits.available || 0,
+              total: data.credits.total || 0,
+              lastUpdated: data.credits.lastUpdated?.toDate() || new Date(),
+            } : undefined,
+            answeringMode: data.answeringMode ? {
+              selectedMode: data.answeringMode.selectedMode || 'simple',
+              lastUpdated: data.answeringMode.lastUpdated?.toDate() || new Date(),
+              isActive: data.answeringMode.isActive || false
+            } : {
               selectedMode: 'simple',
               lastUpdated: new Date(),
               isActive: true
@@ -59,7 +67,7 @@ export function useUserProfile(userId: string): UserProfileHookReturn {
             error: null
           }));
         } else {
-          // No user profile exists
+          // No user document exists
           setState(prev => ({
             ...prev,
             data: null,
@@ -88,28 +96,31 @@ export function useUserProfile(userId: string): UserProfileHookReturn {
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      const userProfileRef = doc(db, 'users', userId, 'userprofile', userId);
-      const newUserProfile: Omit<UserProfile, 'uid'> = {
-        userId: userId,
-        displayName: formData.displayName,
+      // Create profile in the main users collection
+      const userRef = doc(db, 'users', userId);
+      const newUserProfile = {
+        uid: userId,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         email: formData.email,
-        bio: formData.bio || '',
-        phone: formData.phone || '',
-        location: formData.location || '',
-        website: formData.website || '',
-        company: formData.company || '',
-        jobTitle: formData.jobTitle || '',
-        avatar: '', // Will be set separately if needed
+        phone: formData.phone,
+        company: formData.company,
+        position: formData.position,
+        credits: {
+          available: 10, // Free tier credits
+          total: 10,
+          lastUpdated: Timestamp.now(),
+        },
         answeringMode: {
-          selectedMode: 'simple',
-          lastUpdated: new Date(),
+          selectedMode: 'simple' as const,
+          lastUpdated: Timestamp.now(),
           isActive: true
         },
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
       
-      await setDoc(userProfileRef, newUserProfile);
+      await setDoc(userRef, newUserProfile, { merge: true });
 
       // Note: We don't need to manually update state here because onSnapshot will handle it
       // The real-time subscription will automatically update the state with the new data
@@ -117,6 +128,7 @@ export function useUserProfile(userId: string): UserProfileHookReturn {
       setState(prev => ({
         ...prev,
         loading: false,
+        error: null
       }));
 
       return true;
@@ -134,21 +146,22 @@ export function useUserProfile(userId: string): UserProfileHookReturn {
   const updateUserProfile = useCallback(async (formData: UserProfileFormData) => {
     if (!userId || !db) return;
 
-    // Check if we have data to update using stateRef
-    if (!stateRef.current.data?.uid) {
-      throw new Error('No user profile to update');
-    }
-
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      const userProfileRef = doc(db, 'users', userId, 'userprofile', stateRef.current.data.uid);
+      // Update profile in the main users collection
+      const userRef = doc(db, 'users', userId);
       const updateData = {
-        ...formData,
-        updatedAt: new Date(),
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        company: formData.company,
+        position: formData.position,
+        updatedAt: Timestamp.now(),
       };
       
-      await updateDoc(userProfileRef, updateData);
+      await updateDoc(userRef, updateData);
 
       // Note: We don't need to manually update state here because onSnapshot will handle it
       // The real-time subscription will automatically update the state with the new data
@@ -156,7 +169,7 @@ export function useUserProfile(userId: string): UserProfileHookReturn {
       setState(prev => ({
         ...prev,
         loading: false,
-        // isEditing is NOT set here - form handles closing itself
+        error: null
       }));
 
       return true;
@@ -169,7 +182,7 @@ export function useUserProfile(userId: string): UserProfileHookReturn {
       }));
       throw error;
     }
-  }, [userId]); // Removed state.data from dependencies
+  }, [userId]);
 
   const toggleEditMode = useCallback(() => {
     setState(prev => ({ ...prev, isEditing: !prev.isEditing }));
@@ -184,6 +197,6 @@ export function useUserProfile(userId: string): UserProfileHookReturn {
     createUserProfile,
     updateUserProfile,
     toggleEditMode,
-    clearError
+    clearError,
   };
 }

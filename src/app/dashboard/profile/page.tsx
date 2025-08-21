@@ -70,13 +70,13 @@ export default function ProfilePage() {
               <div>
                 <label className="block text-sm font-medium text-muted-foreground">First Name</label>
                 <p className="mt-1 text-sm text-card-foreground">
-                  {userProfile?.displayName?.split(' ')[0] || 'Not set'}
+                  {userProfile?.firstName || 'Not set'}
                 </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-muted-foreground">Last Name</label>
                 <p className="mt-1 text-sm text-card-foreground">
-                  {userProfile?.displayName?.split(' ').slice(1).join(' ') || 'Not set'}
+                  {userProfile?.lastName || 'Not set'}
                 </p>
               </div>
               <div className="md:col-span-2">
@@ -89,6 +89,18 @@ export default function ProfilePage() {
                 <label className="block text-sm font-medium text-muted-foreground">Phone Number</label>
                 <p className="mt-1 text-sm text-card-foreground">
                   {userProfile?.phone || 'Not set'}
+                </p>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-muted-foreground">Company</label>
+                <p className="mt-1 text-sm text-card-foreground">
+                  {userProfile?.company || 'Not set'}
+                </p>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-muted-foreground">Position</label>
+                <p className="mt-1 text-sm text-card-foreground">
+                  {userProfile?.position || 'Not set'}
                 </p>
               </div>
             </div>

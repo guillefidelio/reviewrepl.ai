@@ -1,18 +1,21 @@
 'use client';
 
 import { useAuth } from '@/lib/hooks/useAuth';
+import { useCredits } from '@/lib/hooks/useCredits';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { ChromeExtensionCard } from '@/components/dashboard/ChromeExtensionCard';
 import { AccountSettingsCard } from '@/components/dashboard/AccountSettingsCard';
 
 export default function DashboardPage() {
   const { user, userProfile } = useAuth();
+  const { balance, loading: creditsLoading, getCreditUsage } = useCredits(user?.uid);
 
   if (!user) {
     return null; // Will be handled by layout
   }
 
-  const displayName = userProfile?.displayName || user.displayName || user.email?.split('@')[0] || 'User';
+  const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}`.trim() || user.displayName || user.email?.split('@')[0] || 'User' : user.displayName || user.email?.split('@')[0] || 'User';
+  const creditUsage = getCreditUsage();
 
   return (
     <div className="space-y-6">
@@ -32,10 +35,10 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
           title="Available Credits"
-          value="0"
-          subtitle="0 used of 0 total"
+          value={creditsLoading ? "..." : balance.available.toString()}
+          subtitle={`${balance.total - balance.available} used of ${balance.total} total`}
           icon="💳"
-          progress={0}
+          progress={creditUsage}
         />
         <StatsCard
           title="Reviews Responded"
@@ -51,7 +54,7 @@ export default function DashboardPage() {
         />
         <StatsCard
           title="Current Plan"
-          value="Pro"
+          value={creditsLoading ? "..." : (balance.total >= 100 ? "Professional" : balance.total >= 50 ? "Starter" : "Free")}
           subtitle=""
           icon="🕐"
         />

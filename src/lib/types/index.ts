@@ -20,15 +20,17 @@ export interface AuthContextType {
 export interface UserProfile {
   uid: string;
   userId: string;
-  displayName: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  bio?: string;
-  phone?: string;
-  location?: string;
-  website?: string;
-  company?: string;
-  jobTitle?: string;
-  avatar?: string;
+  phone: string;
+  company: string;
+  position: string;
+  credits?: {
+    available: number;
+    total: number;
+    lastUpdated: Date;
+  };
   answeringMode?: {
     selectedMode: 'simple' | 'pro';
     lastUpdated: Date;
@@ -40,14 +42,12 @@ export interface UserProfile {
 
 // User profile form data (for update operations)
 export interface UserProfileFormData {
-  displayName: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  bio?: string;
-  phone?: string;
-  location?: string;
-  website?: string;
-  company?: string;
-  jobTitle?: string;
+  phone: string;
+  company: string;
+  position: string;
 }
 
 // User profile operation states

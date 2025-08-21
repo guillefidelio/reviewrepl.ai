@@ -14,7 +14,7 @@ interface HeaderProps {
 
 export function Header({ user, userProfile, onSignOut, onMenuClick }: HeaderProps) {
   const pathname = usePathname();
-  const displayName = userProfile?.displayName || user.displayName || user.email?.split('@')[0] || 'User';
+  const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}`.trim() || user.displayName || user.email?.split('@')[0] || 'User' : user.displayName || user.email?.split('@')[0] || 'User';
   const userInitial = displayName.charAt(0).toUpperCase();
 
   // Get the current page name from the pathname
