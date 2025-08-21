@@ -373,19 +373,26 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Response Length
               </label>
-              <div className="space-y-2">
-                {(['Brief', 'Standard', 'Detailed'] as const).map((length) => (
-                  <label key={length} className="flex items-center">
-                    <input
-                      type="radio"
-                      name="responseLength"
-                      value={length}
-                      checked={formData.responseLength === length}
-                      onChange={(e) => handleInputChange('responseLength', e.target.value)}
-                      className="mr-2 text-blue-600 focus:ring-blue-500"
-                    />
+              <div className="inline-flex rounded-lg border border-gray-300 bg-white p-1">
+                {(['Brief', 'Standard', 'Detailed'] as const).map((length, index) => (
+                  <button
+                    key={length}
+                    type="button"
+                    onClick={() => handleInputChange('responseLength', length)}
+                    className={`px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                      formData.responseLength === length
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                    } ${
+                      index === 0 ? 'rounded-l-md' : ''
+                    } ${
+                      index === 2 ? 'rounded-r-md' : ''
+                    } ${
+                      index !== 0 && index !== 2 ? 'border-l border-gray-300' : ''
+                    }`}
+                  >
                     {length}
-                  </label>
+                  </button>
                 ))}
               </div>
             </div>
