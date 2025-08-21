@@ -159,18 +159,13 @@ export function useBusinessProfile(userId: string) {
     }
   }, [userId]);
 
-  const updateBusinessProfile = useCallback(async (formData: BusinessProfileFormData) => {
+  const updateBusinessProfile = useCallback(async (profileId: string, formData: BusinessProfileFormData) => {
     if (!userId || !db) return;
-
-    // Check if we have data to update using stateRef
-    if (!stateRef.current.data?.uid) {
-      throw new Error('No business profile to update');
-    }
 
     setState(prev => ({ ...prev, loading: true, error: null }));
 
     try {
-      const businessProfileRef = doc(db, 'users', userId, 'businessProfiles', stateRef.current.data.uid);
+      const businessProfileRef = doc(db, 'users', userId, 'businessProfiles', profileId);
       const updateData = {
         ...formData,
         updatedAt: new Date(),
@@ -184,7 +179,7 @@ export function useBusinessProfile(userId: string) {
       setState(prev => ({
         ...prev,
         loading: false,
-        // isEditing is NOT set here - form handles closing itself
+        error: null
       }));
 
       return true;
@@ -197,7 +192,7 @@ export function useBusinessProfile(userId: string) {
       }));
       throw error;
     }
-  }, [userId]); // Removed state.data from dependencies
+  }, [userId]);
 
   const deleteBusinessProfile = useCallback(async () => {
     if (!userId || !db || !state.data?.uid) return;
