@@ -33,6 +33,12 @@ export default function Home() {
           >
             Dashboard
           </Link>
+          <Link
+            href="/pricing"
+            className="rounded-full border border-solid border-purple-300 transition-colors flex items-center justify-center bg-purple-600 text-white gap-2 hover:bg-purple-700 font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
+          >
+            Pricing
+          </Link>
 
         </div>
       </main>

@@ -161,41 +161,29 @@ export function BusinessProfile() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Products/Services</label>
-          <p className="mt-1 text-sm text-gray-900">{businessProfile?.productService}</p>
+          <p className="mt-1 text-sm text-gray-900">{businessProfile?.mainProductsServices}</p>
         </div>
 
-        {businessProfile?.description && (
+        {businessProfile?.briefDescription && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Description</label>
-            <p className="mt-1 text-sm text-gray-900">{businessProfile.description}</p>
+            <p className="mt-1 text-sm text-gray-900">{businessProfile.briefDescription}</p>
           </div>
         )}
 
-        {businessProfile?.industry && (
+        {businessProfile?.businessMainCategory && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Industry</label>
-            <p className="mt-1 text-sm text-gray-900">{businessProfile.industry}</p>
+            <p className="mt-1 text-sm text-gray-900">{businessProfile.businessMainCategory}</p>
           </div>
         )}
 
-        {businessProfile?.website && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Website</label>
-            <a 
-              href={businessProfile.website} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="mt-1 text-sm text-blue-600 hover:text-blue-800 underline"
-            >
-              {businessProfile.website}
-            </a>
-          </div>
-        )}
+        {/* Website field removed - not in current BusinessProfile interface */}
 
-        {businessProfile?.location && (
+        {businessProfile?.country && businessProfile?.stateProvince && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Location</label>
-            <p className="mt-1 text-sm text-gray-900">{businessProfile.location}</p>
+            <p className="mt-1 text-sm text-gray-900">{businessProfile.stateProvince}, {businessProfile.country}</p>
           </div>
         )}
 

@@ -331,6 +331,30 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin() || isSystemService();
     }
     
+    // Paddle Customers (users can read their own, admins can read all)
+    match /paddleCustomers/{customerId} {
+      allow read: if isAuthenticated() && 
+                     (request.auth.uid == resource.data.userId || isAdmin() || isSupport());
+      allow create, update: if isSystemService() || isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Paddle Subscriptions (users can read their own, admins can read all)
+    match /paddleSubscriptions/{subscriptionId} {
+      allow read: if isAuthenticated() && 
+                     (request.auth.uid == resource.data.userId || isAdmin() || isSupport());
+      allow create, update: if isSystemService() || isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Paddle Transactions (users can read their own, admins can read all)
+    match /paddleTransactions/{transactionId} {
+      allow read: if isAuthenticated() && 
+                     (request.auth.uid == resource.data.userId || isAdmin() || isSupport());
+      allow create, update: if isSystemService() || isAdmin();
+      allow delete: if isAdmin();
+    }
+    
 
     
     // Default deny rule for any unmatched paths

@@ -1,0 +1,18 @@
+# Paddle v2 SDK Environment Variables
+# Copy this to your .env.local file and fill in the actual values
+
+# Paddle Client Token (from Paddle dashboard → Developers → Authentication)
+# Must start with "pk_test_" for sandbox or "pk_live_" for production
+NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=pk_test_your_client_token_here
+
+# Paddle Price IDs (from Paddle dashboard → Products → Prices)
+# These are the actual Paddle price IDs (pri_xxx) for your subscription plans
+NEXT_PUBLIC_PADDLE_ENTHUSIAST_PRICE_ID=pri_your_enthusiast_price_id_here
+NEXT_PUBLIC_PADDLE_PRO_PRICE_ID=pri_your_pro_price_id_here
+
+# Paddle Webhook Secret (from Paddle dashboard → Developers → Webhooks)
+# Used to validate webhook signatures
+PADDLE_WEBHOOK_SECRET=your_webhook_secret_here
+
+# Note: The environment (sandbox/production) is automatically determined
+# based on NODE_ENV in your Next.js configuration

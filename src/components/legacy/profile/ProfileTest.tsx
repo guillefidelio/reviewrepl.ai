@@ -52,7 +52,8 @@ export function ProfileTest() {
     // Test 3: Profile data
     if (userProfile) {
       addResult('✅ User profile data loaded successfully');
-      addResult(`👤 Display name: ${userProfile.displayName || 'Not set'}`);
+      addResult(`👤 First Name: ${userProfile.firstName || 'Not set'}`);
+      addResult(`👤 Last Name: ${userProfile.lastName || 'Not set'}`);
       addResult(`📱 Phone: ${userProfile.phone || 'Not provided'}`);
       addResult(`📅 Created: ${userProfile.createdAt.toLocaleDateString()}`);
       addResult(`🔄 Updated: ${userProfile.updatedAt.toLocaleDateString()}`);

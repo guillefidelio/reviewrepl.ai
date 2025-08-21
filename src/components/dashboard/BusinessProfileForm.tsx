@@ -119,7 +119,7 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
   };
 
   // Handle input changes
-  const handleInputChange = (field: keyof BusinessProfileFormData, value: any) => {
+  const handleInputChange = (field: keyof BusinessProfileFormData, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     if (errors[field]) {
