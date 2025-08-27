@@ -258,6 +258,44 @@ export type Database = {
           updated_at?: string
         }
       }
+      jobs: {
+        Row: {
+          id: string
+          user_id: string
+          status: 'pending' | 'processing' | 'completed' | 'failed'
+          job_type: string
+          payload: Record<string, unknown>
+          result: Record<string, unknown> | null
+          error: string | null
+          retry_count: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          status?: 'pending' | 'processing' | 'completed' | 'failed'
+          job_type: string
+          payload: Record<string, unknown>
+          result?: Record<string, unknown> | null
+          error?: string | null
+          retry_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          status?: 'pending' | 'processing' | 'completed' | 'failed'
+          job_type?: string
+          payload?: Record<string, unknown>
+          result?: Record<string, unknown> | null
+          error?: string | null
+          retry_count?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
   }
 }

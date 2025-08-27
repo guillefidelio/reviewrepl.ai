@@ -39,6 +39,12 @@ export default function Home() {
           >
             Test Supabase
           </Link>
+          <Link
+            href="/api-test"
+            className="rounded-full border border-solid border-gray-300 transition-colors flex items-center justify-center hover:bg-gray-50 hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:w-auto"
+          >
+            Test API Auth
+          </Link>
 
         </div>
       </main>

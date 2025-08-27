@@ -1,3 +1,8 @@
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=https://aailoyciqgopysfowtso.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+
+# Supabase Service Role Key (for server-side operations)
+# ⚠️ IMPORTANT: This key has admin privileges - keep it secret!
+# Get this from: Supabase Dashboard → Settings → API → service_role key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
