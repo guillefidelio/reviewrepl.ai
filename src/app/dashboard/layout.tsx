@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Sidebar } from '@/components/dashboard/Sidebar';
@@ -11,7 +11,7 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { user, userProfile, loading, signOut } = useAuth();
+  const { user, session, loading, signOut } = useSupabaseAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -66,7 +66,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Header */}
         <Header 
           user={user}
-          userProfile={userProfile}
           onSignOut={handleSignOut}
           onMenuClick={() => setSidebarOpen(true)}
         />

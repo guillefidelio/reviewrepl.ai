@@ -1,20 +1,13 @@
 'use client';
 
-import { useAuth } from '@/lib/hooks/useAuth';
-import { usePrompts } from '@/lib/hooks/usePrompts';
+import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
+import { useSupabasePrompts } from '@/lib/hooks/useSupabasePrompts';
+
 import { PromptForm } from './PromptForm';
 
 export function PromptsManager() {
-  const { user } = useAuth();
-  const {
-    data: prompts,
-    loading,
-    error,
-    isEditing,
-    editingPromptId,
-    toggleEditMode,
-    clearError,
-  } = usePrompts(user?.uid || '');
+  const { user } = useSupabaseAuth();
+  const { data: prompts, loading, error, isEditing, editingPromptId, toggleEditMode, clearError } = useSupabasePrompts();
 
   // Debug: Log every render to see if component is re-rendering
   console.log('Prompts render:', { 
@@ -161,29 +154,33 @@ export function PromptsManager() {
       ) : (
         <div className="space-y-4">
           {prompts.map((prompt) => (
-            <div key={prompt.id} className="border border-gray-200 rounded-lg p-4">
+            <div key={prompt.id} className={`border border-gray-200 rounded-lg p-4 ${
+              prompt.content.includes('negative review') ? 'bg-red-50/30' :
+              prompt.content.includes('neutral review') ? 'bg-gray-50/30' :
+              prompt.content.includes('positive review') ? 'bg-green-50/30' :
+              'bg-white'
+            }`}>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-2">
-                    <h4 className="text-sm font-medium text-gray-900">Prompt {prompt.id}</h4>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      v{prompt.version}
-                    </span>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                      ★ {prompt.rating.toFixed(1)}
-                    </span>
-                    {prompt.hasText && (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Has Text
-                      </span>
-                    )}
+                    <h4 className={`text-sm font-medium ${
+                      prompt.content.includes('negative review') ? 'text-red-600' :
+                      prompt.content.includes('neutral review') ? 'text-gray-700' :
+                      prompt.content.includes('positive review') ? 'text-green-600' :
+                      'text-gray-900'
+                    }`}>
+                      {prompt.content.includes('negative review') ? '👎 Bad Reviews Answering Prompt' :
+                       prompt.content.includes('neutral review') ? '😐 Neutral Reviews Answering Prompt' :
+                       prompt.content.includes('positive review') ? '👍 Good Reviews Answering Prompt' :
+                       `Prompt ${prompt.id}`}
+                    </h4>
                   </div>
                   <div className="text-sm text-gray-600 mb-2">
                     <p className="whitespace-pre-wrap line-clamp-3">{prompt.content}</p>
                   </div>
                   <div className="flex items-center space-x-4 text-xs text-gray-500">
-                    <span>Created: {prompt.createdAt.toLocaleDateString()}</span>
-                    <span>Updated: {prompt.updatedAt.toLocaleDateString()}</span>
+                    <span>Created: {new Date(prompt.created_at).toLocaleDateString()}</span>
+                    <span>Updated: {new Date(prompt.updated_at).toLocaleDateString()}</span>
                   </div>
                 </div>
                 <div className="flex space-x-2 ml-4">

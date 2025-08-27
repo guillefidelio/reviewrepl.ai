@@ -42,8 +42,8 @@ export interface UserProfile {
 
 // User profile form data (for update operations)
 export interface UserProfileFormData {
-  firstName: string;
-  lastName: string;
+  first_name: string;
+  last_name: string;
   email: string;
   phone: string;
   company: string;

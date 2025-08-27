@@ -16,10 +16,10 @@ export default function Home() {
 
         <div className="flex gap-4 items-center flex-col sm:flex-row">
           <Link
-            href="/login"
+            href="/supabase-login"
             className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-blue-600 text-white gap-2 hover:bg-blue-700 font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
           >
-            Sign In
+            Sign In (Supabase)
           </Link>
           <Link
             href="/register"
@@ -32,6 +32,12 @@ export default function Home() {
             className="rounded-full border border-solid border-gray-300 transition-colors flex items-center justify-center hover:bg-gray-50 hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:w-auto"
           >
             Dashboard
+          </Link>
+          <Link
+            href="/supabase-test"
+            className="rounded-full border border-solid border-gray-300 transition-colors flex items-center justify-center hover:bg-gray-50 hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:w-auto"
+          >
+            Test Supabase
           </Link>
 
         </div>

@@ -33,7 +33,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     },
     {
       name: 'Answering Mode',
-      href: '/dashboard/prompts',
+      href: '/dashboard/answering-mode',
       icon: MessageSquare,
       description: 'Choose response method'
     }

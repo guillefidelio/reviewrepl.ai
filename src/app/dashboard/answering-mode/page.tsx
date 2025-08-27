@@ -1,12 +1,13 @@
 'use client';
 
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
+import { useSupabaseAnsweringMode } from '@/lib/hooks/useSupabaseAnsweringMode';
 import { PromptsManager } from '@/components/dashboard/PromptsManager';
-import { useAnsweringMode } from '@/lib/hooks/useAnsweringMode';
+
 
 export default function PromptsPage() {
-  const { user, userProfile } = useAuth();
-  const { selectedMode, updateMode, loading, error, clearError } = useAnsweringMode(user?.uid || '', userProfile);
+  const { user } = useSupabaseAuth();
+  const { selectedMode, updateMode, loading, error, clearError } = useSupabaseAnsweringMode();
 
   if (!user) {
     return null; // Will be handled by layout
@@ -50,7 +51,7 @@ export default function PromptsPage() {
       )}
 
       {/* Mode Selection Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
         {/* Simple Mode Card */}
         <div 
           className={`
@@ -79,7 +80,7 @@ export default function PromptsPage() {
               Let our AI automatically generate appropriate responses based on review sentiment. Perfect for getting started quickly.
             </p>
             {selectedMode === 'simple' && (
-              <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary text-primary-foreground">
+              <div className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                 ✓ Currently Active
               </div>
             )}
@@ -114,7 +115,7 @@ export default function PromptsPage() {
               Customize your own response templates and control exactly how your AI responds to different types of reviews.
             </p>
             {selectedMode === 'pro' && (
-              <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary text-primary-foreground">
+              <div className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
                 ✓ Currently Active
               </div>
             )}
@@ -135,12 +136,12 @@ export default function PromptsPage() {
               You are using Simple Mode
             </h3>
                            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                 Our AI will automatically generate appropriate responses based on review sentiment. 
-                 You don&apos;t need to configure anything - just let our system handle the responses for you.
+                 Our AI will automatically generate appropriate responses based on your business profile and review sentiment. 
+                 You don&apos;t need to configure anything else - just let our system handle the responses for you.
                </p>
             <div className="mt-6 p-4 bg-muted rounded-lg max-w-md mx-auto">
               <p className="text-sm text-muted-foreground">
-                <strong>What this means:</strong> When you receive a review, our AI will analyze the sentiment 
+                <strong>What this means:</strong> When you are using simple mode and press "answer with AI" button our AI will analyze the sentiment 
                 and automatically generate a professional, appropriate response without any manual configuration needed.
               </p>
             </div>

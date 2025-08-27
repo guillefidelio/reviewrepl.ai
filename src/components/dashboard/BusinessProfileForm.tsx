@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { useBusinessProfile } from '@/lib/hooks/useBusinessProfile';
-import { BusinessProfile, BusinessProfileFormData } from '@/lib/types';
+import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
+
+import { useSupabaseBusinessProfile, type BusinessProfile, type BusinessProfileData } from '@/lib/hooks/useSupabaseBusinessProfile';
 
 interface BusinessProfileFormProps {
   businessProfile?: BusinessProfile | null;
@@ -12,8 +12,8 @@ interface BusinessProfileFormProps {
 }
 
 export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: BusinessProfileFormProps) {
-  const { user } = useAuth();
-  const { createBusinessProfile, updateBusinessProfile, loading } = useBusinessProfile(user?.uid || '');
+  const { user } = useSupabaseAuth();
+  const { createBusinessProfile, updateBusinessProfile, loading } = useSupabaseBusinessProfile();
   
   const [formData, setFormData] = useState<BusinessProfileFormData>({
     // Essential Parameters
@@ -49,23 +49,23 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
   useEffect(() => {
     if (businessProfile) {
       setFormData({
-        businessName: businessProfile.businessName || '',
-        businessMainCategory: businessProfile.businessMainCategory || 'Restaurant',
-        businessSecondaryCategory: businessProfile.businessSecondaryCategory || '',
-        businessTags: businessProfile.businessTags || [],
-        mainProductsServices: businessProfile.mainProductsServices || '',
-        briefDescription: businessProfile.briefDescription || '',
+        businessName: businessProfile.business_name || '',
+        businessMainCategory: businessProfile.business_main_category || 'Restaurant',
+        businessSecondaryCategory: businessProfile.business_secondary_category || '',
+        businessTags: businessProfile.business_tags || [],
+        mainProductsServices: businessProfile.main_products_services || '',
+        briefDescription: businessProfile.brief_description || '',
         country: businessProfile.country || '',
-        stateProvince: businessProfile.stateProvince || '',
+        stateProvince: businessProfile.state_province || '',
         language: businessProfile.language || 'English',
-        responseTone: businessProfile.responseTone || 'Professional',
-        responseLength: businessProfile.responseLength || 'Standard',
+        responseTone: businessProfile.response_tone || 'Professional',
+        responseLength: businessProfile.response_length || 'Standard',
         greetings: businessProfile.greetings || '',
         signatures: businessProfile.signatures || '',
-        positiveReviewCTA: businessProfile.positiveReviewCTA || '',
-        negativeReviewEscalation: businessProfile.negativeReviewEscalation || '',
-        brandVoiceNotes: businessProfile.brandVoiceNotes || '',
-        otherConsiderations: businessProfile.otherConsiderations || '',
+        positiveReviewCTA: businessProfile.positive_review_cta || '',
+        negativeReviewEscalation: businessProfile.negative_review_escalation || '',
+        brandVoiceNotes: businessProfile.brand_voice_notes || '',
+        otherConsiderations: businessProfile.other_considerations || '',
       });
     }
   }, [businessProfile]);
@@ -94,6 +94,29 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
     return Object.keys(newErrors).length === 0;
   };
 
+  // Convert camelCase form data to snake_case database fields
+  const convertFormDataToDatabase = (formData: BusinessProfileFormData) => {
+    return {
+      business_name: formData.businessName,
+      business_main_category: formData.businessMainCategory,
+      business_secondary_category: formData.businessSecondaryCategory,
+      business_tags: formData.businessTags,
+      main_products_services: formData.mainProductsServices,
+      brief_description: formData.briefDescription,
+      country: formData.country,
+      state_province: formData.stateProvince,
+      language: formData.language,
+      response_tone: formData.responseTone,
+      response_length: formData.responseLength,
+      greetings: formData.greetings,
+      signatures: formData.signatures,
+      positive_review_cta: formData.positiveReviewCTA,
+      negative_review_escalation: formData.negativeReviewEscalation,
+      brand_voice_notes: formData.brandVoiceNotes,
+      other_considerations: formData.otherConsiderations,
+    };
+  };
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,11 +128,17 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
     setIsSubmitting(true);
 
     try {
+      const databaseData = convertFormDataToDatabase(formData);
+      
       if (businessProfile) {
-        await updateBusinessProfile(businessProfile.uid, formData);
+        await updateBusinessProfile(databaseData);
       } else {
-        await createBusinessProfile(formData);
+        await createBusinessProfile(databaseData);
       }
+      
+      // Add a small delay to ensure state update is complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       onSuccess();
     } catch (error) {
       console.error('Error saving business profile:', error);

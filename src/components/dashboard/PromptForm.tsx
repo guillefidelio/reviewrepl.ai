@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { usePrompts } from '@/lib/hooks/usePrompts';
-import { Prompt } from '@/lib/types';
+import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
+
+import { useSupabasePrompts, type Prompt } from '@/lib/hooks/useSupabasePrompts';
 
 interface PromptFormProps {
   prompt: Prompt; // Required since we only allow editing
@@ -11,8 +11,8 @@ interface PromptFormProps {
 }
 
 export function PromptForm({ prompt, onCancel }: PromptFormProps) {
-  const { user } = useAuth();
-  const { updatePrompt, loading } = usePrompts(user?.uid || '');
+  const { user } = useSupabaseAuth();
+  const { updatePrompt, loading } = useSupabasePrompts();
   
   const [formData, setFormData] = useState<{ content: string }>({
     content: '',

@@ -1,21 +1,26 @@
 'use client';
 
-import { useAuth } from '@/lib/hooks/useAuth';
-import { useCredits } from '@/lib/hooks/useCredits';
+import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
+import { useSupabaseCredits } from '@/lib/hooks/useSupabaseCredits';
+
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { ChromeExtensionCard } from '@/components/dashboard/ChromeExtensionCard';
 import { AccountSettingsCard } from '@/components/dashboard/AccountSettingsCard';
 
 export default function DashboardPage() {
-  const { user, userProfile } = useAuth();
-  const { balance, loading: creditsLoading, getCreditUsage } = useCredits(user?.uid);
+  const { user } = useSupabaseAuth();
+  const { balance, loading: creditsLoading } = useSupabaseCredits();
 
   if (!user) {
     return null; // Will be handled by layout
   }
 
-  const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}`.trim() || user.displayName || user.email?.split('@')[0] || 'User' : user.displayName || user.email?.split('@')[0] || 'User';
-  const creditUsage = getCreditUsage();
+  const displayName = user?.user_metadata?.first_name && user?.user_metadata?.last_name 
+    ? `${user.user_metadata.first_name} ${user.user_metadata.last_name}`.trim()
+    : user?.email?.split('@')[0] || 'User';
+  
+  // Calculate credit usage percentage
+  const creditUsage = balance.total > 0 ? ((balance.total - balance.available) / balance.total) * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -48,7 +53,7 @@ export default function DashboardPage() {
         />
         <StatsCard
           title="You are using"
-          value={userProfile?.answeringMode?.selectedMode?.toUpperCase() || "SIMPLE"}
+          value="SIMPLE"
           subtitle="mode"
           icon="📈"
         />

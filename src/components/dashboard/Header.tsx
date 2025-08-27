@@ -1,26 +1,26 @@
 'use client';
 
-import { User } from 'firebase/auth';
-import { UserProfile } from '@/lib/types';
+import { User } from '@supabase/supabase-js';
 import { Menu, LogOut } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 interface HeaderProps {
   user: User;
-  userProfile?: UserProfile | null;
   onSignOut: () => void;
   onMenuClick: () => void;
 }
 
-export function Header({ user, userProfile, onSignOut, onMenuClick }: HeaderProps) {
+export function Header({ user, onSignOut, onMenuClick }: HeaderProps) {
   const pathname = usePathname();
-  const displayName = userProfile ? `${userProfile.firstName} ${userProfile.lastName}`.trim() || user.displayName || user.email?.split('@')[0] || 'User' : user.displayName || user.email?.split('@')[0] || 'User';
+  const displayName = user?.user_metadata?.first_name && user?.user_metadata?.last_name 
+    ? `${user.user_metadata.first_name} ${user.user_metadata.last_name}`.trim()
+    : user?.email?.split('@')[0] || 'User';
   const userInitial = displayName.charAt(0).toUpperCase();
 
   // Get the current page name from the pathname
   const getPageTitle = () => {
     if (pathname === '/dashboard') return 'Dashboard';
-    if (pathname === '/dashboard/prompts') return 'Answering Mode';
+    if (pathname === '/dashboard/answering-mode') return 'Answering Mode';
     if (pathname === '/dashboard/profile') return 'Profile';
     if (pathname === '/dashboard/legacy') return 'Legacy';
     
