@@ -141,7 +141,7 @@ export default function PromptsPage() {
                </p>
             <div className="mt-6 p-4 bg-muted rounded-lg max-w-md mx-auto">
               <p className="text-sm text-muted-foreground">
-                <strong>What this means:</strong> When you are using simple mode and press "answer with AI" button our AI will analyze the sentiment 
+                <strong>What this means:</strong> When you are using simple mode and press &quot;answer with AI&quot; button our AI will analyze the sentiment 
                 and automatically generate a professional, appropriate response without any manual configuration needed.
               </p>
             </div>

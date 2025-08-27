@@ -126,7 +126,7 @@ export default function SupabaseTestPage() {
             ) : (
               <div className="space-y-3">
                 <p className="text-gray-600">
-                  Great! You're authenticated. Now you can:
+                  Great! You&apos;re authenticated. Now you can:
                 </p>
                 <div className="space-y-2">
                   <Link 

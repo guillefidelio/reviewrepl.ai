@@ -1,13 +1,15 @@
 'use client';
 
-
-import { useAuth } from '@/lib/hooks/useAuth';
-import { useUserProfile } from '@/lib/hooks/useUserProfile';
+import { useState } from 'react';
+import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
+import { useSupabaseUserProfile } from '@/lib/hooks/useSupabaseUserProfile';
 import { UserProfileForm } from '../dashboard/UserProfileForm';
 
 export function UserProfile() {
-  const { user } = useAuth();
-  const { data: userProfile, loading, error, isEditing, toggleEditMode, clearError } = useUserProfile(user?.uid || '');
+  const { user } = useSupabaseAuth();
+  const { data: userProfile, loading, error, clearError } = useSupabaseUserProfile();
+  
+  const [isEditing, setIsEditing] = useState(false);
 
   if (!user) {
     return (
@@ -49,7 +51,7 @@ export function UserProfile() {
               <div className="mt-4">
                 <div className="-mx-2 -my-1.5 flex">
                   <button
-                    onClick={toggleEditMode}
+                    onClick={() => setIsEditing(true)}
                     className="bg-red-50 px-2 py-1.5 rounded-md text-sm font-medium text-red-800 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-red-50 focus:ring-red-600"
                   >
                     Try Again
@@ -70,7 +72,7 @@ export function UserProfile() {
   }
 
   if (isEditing) {
-    return <UserProfileForm userProfile={userProfile} onCancel={toggleEditMode} onSuccess={toggleEditMode} />;
+    return <UserProfileForm userProfile={userProfile} onCancel={() => setIsEditing(false)} onSuccess={() => setIsEditing(false)} />;
   }
 
   if (!userProfile) {
@@ -84,7 +86,7 @@ export function UserProfile() {
           <p className="mt-1 text-sm text-gray-500">Get started by creating your profile.</p>
           <div className="mt-6">
             <button
-              onClick={toggleEditMode}
+              onClick={() => setIsEditing(true)}
               className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Create Profile
@@ -100,7 +102,7 @@ export function UserProfile() {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900">User Profile</h3>
         <button
-          onClick={toggleEditMode}
+          onClick={() => setIsEditing(true)}
           className="px-3 py-1 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           Edit Profile
@@ -111,13 +113,13 @@ export function UserProfile() {
         {/* First Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700">First Name</label>
-          <p className="mt-1 text-sm text-gray-900">{userProfile.firstName || 'Not provided'}</p>
+          <p className="mt-1 text-sm text-gray-900">{userProfile.first_name || 'Not provided'}</p>
         </div>
 
         {/* Last Name */}
         <div>
           <label className="block text-sm font-medium text-gray-700">Last Name</label>
-          <p className="mt-1 text-sm text-gray-900">{userProfile.lastName || 'Not provided'}</p>
+          <p className="mt-1 text-sm text-gray-900">{userProfile.last_name || 'Not provided'}</p>
         </div>
 
         {/* Email */}
@@ -154,10 +156,10 @@ export function UserProfile() {
         <div className="pt-4 border-t border-gray-200">
           <div className="grid grid-cols-2 gap-4 text-xs text-gray-500">
             <div>
-              <span className="font-medium">Created:</span> {userProfile.createdAt.toLocaleDateString()}
+              <span className="font-medium">Created:</span> {userProfile.created_at ? new Date(userProfile.created_at).toLocaleDateString() : 'N/A'}
             </div>
             <div>
-              <span className="font-medium">Updated:</span> {userProfile.updatedAt.toLocaleDateString()}
+              <span className="font-medium">Updated:</span> {userProfile.updated_at ? new Date(userProfile.updated_at).toLocaleDateString() : 'N/A'}
             </div>
           </div>
         </div>

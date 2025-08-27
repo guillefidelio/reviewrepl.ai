@@ -132,7 +132,7 @@
 - **Form Fields**: First name, last name, phone (email read-only)
 - **Real-time Validation**: Form validation on submit
 - **Save States**: Loading spinner, success/error messages
-- **API Integration**: Updates Firestore via `/api/user/profile`
+- **API Integration**: Updates Supabase via user profile hooks
 
 ---
 
@@ -160,7 +160,7 @@
 │ │ │ Version 2.0.1       │  │ │ │  SIMPLE MODE SHOWS A MESSAGE "YOU ARE GOING TO ANSWER REVIEWS
 │                             │ │ │ ON OUR STATE OF THE ART AI MODEL                             │ │ │
 │                             │ │ │                                                              │ │ │
-│                             │ │ │ PRO MODE SHOWS THE PROMPTS AND EDITABLES FROM FIRESTORE      │ │ │
+│                             │ │ │ PRO MODE SHOWS THE PROMPTS AND EDITABLES FROM SUPABASE      │ │ │
 │                             │ │ │                                                              │ │ │
 │                             │ │ │                                                              │ │ │
 │                             │ │ │                                                              │ │ │
@@ -288,7 +288,7 @@ Any /dashboard/* URL
 ```
 
 ### Session Management
-- **Session Provider**: firebase auth wraps entire app
+- **Session Provider**: Supabase auth wraps entire app
 - **Protected Routes**: ProtectedRoute component for client-side protection
 - **Middleware**: Server-side route protection
 - **Automatic Redirects**: Seamless auth flow
@@ -327,7 +327,7 @@ Any /dashboard/* URL
 ### State Management
 - **React Hooks**: useState, useEffect for local state
 - **Custom Hooks**: usePrompts for prompt management
-- **Session State**: Firebase session management
+- **Session State**: Supabase session management
 
 
 ### Performance Considerations

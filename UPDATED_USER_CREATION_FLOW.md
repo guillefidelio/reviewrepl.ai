@@ -135,3 +135,4 @@ You can verify the updated flow is working by checking:
 4. **Check that RLS policies** allow authenticated users to insert/update their own records
 
 The updated system should now work seamlessly with your existing database structure!
+

@@ -4,12 +4,20 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
+interface UserData {
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  company?: string;
+  position?: string;
+}
+
 interface SupabaseAuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   error: string | null;
-  signUp: (email: string, password: string, userData: any) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string, userData: UserData) => Promise<{ error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
   signInWithGoogle: () => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
@@ -44,7 +52,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, userData: any) => {
+  const signUp = async (email: string, password: string, userData: UserData) => {
     try {
       setError(null);
       const { data, error } = await supabase.auth.signUp({

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
 import { supabase } from '@/lib/supabase';
 
@@ -13,7 +13,7 @@ export function useSupabaseAnsweringMode() {
   const [error, setError] = useState<string | null>(null);
 
   // Fetch answering mode from the main users table
-  const fetchAnsweringMode = async () => {
+  const fetchAnsweringMode = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -37,7 +37,7 @@ export function useSupabaseAnsweringMode() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   // Update answering mode in the main users table
   const updateMode = async (newMode: AnsweringMode) => {

@@ -1,9 +1,34 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
 
-import { useSupabaseBusinessProfile, type BusinessProfile, type BusinessProfileData } from '@/lib/hooks/useSupabaseBusinessProfile';
+
+import { useSupabaseBusinessProfile, type BusinessProfile } from '@/lib/hooks/useSupabaseBusinessProfile';
+
+interface BusinessProfileFormData {
+  // Essential Parameters
+  businessName: string;
+  businessMainCategory: string;
+  businessSecondaryCategory: string;
+  businessTags: string[];
+  mainProductsServices: string;
+  briefDescription: string;
+  country: string;
+  stateProvince: string;
+  language: string;
+  responseTone: string;
+  
+  // Useful Secondary Parameters
+  responseLength: string;
+  greetings: string;
+  signatures: string;
+  positiveReviewCTA: string;
+  negativeReviewEscalation: string;
+  
+  // Advanced Options
+  brandVoiceNotes: string;
+  otherConsiderations: string;
+}
 
 interface BusinessProfileFormProps {
   businessProfile?: BusinessProfile | null;
@@ -12,7 +37,6 @@ interface BusinessProfileFormProps {
 }
 
 export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: BusinessProfileFormProps) {
-  const { user } = useSupabaseAuth();
   const { createBusinessProfile, updateBusinessProfile, loading } = useSupabaseBusinessProfile();
   
   const [formData, setFormData] = useState<BusinessProfileFormData>({
@@ -148,7 +172,7 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
   };
 
   // Handle input changes
-  const handleInputChange = (field: keyof BusinessProfileFormData, value: any) => {
+  const handleInputChange = (field: keyof BusinessProfileFormData, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     if (errors[field]) {

@@ -1,25 +1,27 @@
 'use client';
 
-import { useAuth } from '@/lib/hooks/useAuth';
-import { useBusinessProfile } from '@/lib/hooks/useBusinessProfile';
+import { useState } from 'react';
+import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
+import { useSupabaseBusinessProfile } from '@/lib/hooks/useSupabaseBusinessProfile';
 import { BusinessProfileForm } from './BusinessProfileForm';
 
 export function BusinessProfile() {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   const {
     data: businessProfile,
     loading,
     error,
-    isEditing,
-    isCreating,
-    toggleEditMode,
+    createBusinessProfile,
+    updateBusinessProfile,
     clearError,
-    deleteBusinessProfile,
-  } = useBusinessProfile(user?.uid || '');
+  } = useSupabaseBusinessProfile();
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   // Debug: Log every render to see if component is re-rendering
   console.log('BusinessProfile render:', { 
-    businessProfile: businessProfile ? { businessName: businessProfile.businessName, uid: businessProfile.uid } : null, 
+    businessProfile: businessProfile ? { businessName: businessProfile.business_name, uid: businessProfile.id } : null, 
     isEditing, 
     isCreating, 
     loading,
@@ -90,7 +92,19 @@ export function BusinessProfile() {
     return (
       <BusinessProfileForm 
         businessProfile={businessProfile}
-        onCancel={toggleEditMode}
+        onCancel={() => setIsEditing(false)}
+        onSuccess={() => setIsEditing(false)}
+      />
+    );
+  }
+
+  // Show create form if creating
+  if (isCreating) {
+    return (
+      <BusinessProfileForm 
+        businessProfile={null}
+        onCancel={() => setIsCreating(false)}
+        onSuccess={() => setIsCreating(false)}
       />
     );
   }
@@ -113,7 +127,7 @@ export function BusinessProfile() {
               </div>
               <div className="mt-4">
                 <button
-                  onClick={toggleEditMode}
+                  onClick={() => setIsCreating(true)}
                   className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
                   Create Business Profile
@@ -133,7 +147,7 @@ export function BusinessProfile() {
         <h3 className="text-lg font-semibold text-gray-900">Business Profile</h3>
         <div className="flex space-x-2">
           <button
-            onClick={toggleEditMode}
+            onClick={() => setIsEditing(true)}
             className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,75 +155,53 @@ export function BusinessProfile() {
             </svg>
             Edit
           </button>
-          <button
-            onClick={deleteBusinessProfile}
-            className="inline-flex items-center px-3 py-2 border border-red-300 text-sm leading-4 font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          >
-            <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Delete
-          </button>
+
         </div>
       </div>
       
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">Business Name</label>
-          <p className="mt-1 text-sm text-gray-900">{businessProfile?.businessName}</p>
+          <p className="mt-1 text-sm text-gray-900">{businessProfile?.business_name}</p>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Products/Services</label>
-          <p className="mt-1 text-sm text-gray-900">{businessProfile?.productService}</p>
+          <p className="mt-1 text-sm text-gray-900">{businessProfile?.main_products_services}</p>
         </div>
 
-        {businessProfile?.description && (
+        {businessProfile?.brief_description && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Description</label>
-            <p className="mt-1 text-sm text-gray-900">{businessProfile.description}</p>
+            <p className="mt-1 text-sm text-gray-900">{businessProfile.brief_description}</p>
           </div>
         )}
 
-        {businessProfile?.industry && (
+        {businessProfile?.business_main_category && (
           <div>
-            <label className="block text-sm font-medium text-gray-700">Industry</label>
-            <p className="mt-1 text-sm text-gray-900">{businessProfile.industry}</p>
+            <label className="block text-sm font-medium text-gray-700">Category</label>
+            <p className="mt-1 text-sm text-gray-900">{businessProfile.business_main_category}</p>
           </div>
         )}
 
-        {businessProfile?.website && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Website</label>
-            <a 
-              href={businessProfile.website} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="mt-1 text-sm text-blue-600 hover:text-blue-800 underline"
-            >
-              {businessProfile.website}
-            </a>
-          </div>
-        )}
-
-        {businessProfile?.location && (
+        {businessProfile?.country && (
           <div>
             <label className="block text-sm font-medium text-gray-700">Location</label>
-            <p className="mt-1 text-sm text-gray-900">{businessProfile.location}</p>
+            <p className="mt-1 text-sm text-gray-900">{businessProfile.country}, {businessProfile.state_province}</p>
           </div>
         )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Created</label>
           <p className="mt-1 text-sm text-gray-900">
-            {businessProfile?.createdAt.toLocaleDateString()}
+            {businessProfile?.created_at ? new Date(businessProfile.created_at).toLocaleDateString() : 'N/A'}
           </p>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">Last Updated</label>
           <p className="mt-1 text-sm text-gray-900">
-            {businessProfile?.updatedAt.toLocaleDateString()}
+            {businessProfile?.updated_at ? new Date(businessProfile.updated_at).toLocaleDateString() : 'N/A'}
           </p>
         </div>
       </div>

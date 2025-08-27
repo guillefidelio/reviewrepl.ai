@@ -3,11 +3,10 @@
 import { Settings } from 'lucide-react';
 import Link from 'next/link';
 
-import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
+
 import { useSupabaseCredits } from '@/lib/hooks/useSupabaseCredits';
 
 export function AccountSettingsCard() {
-  const { user } = useSupabaseAuth();
   const { balance, loading: creditsLoading } = useSupabaseCredits();
 
   // Determine plan based on credits

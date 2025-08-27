@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
 import { supabase } from '@/lib/supabase';
 
@@ -31,7 +31,7 @@ export function useSupabasePrompts() {
   const [editingPromptId, setEditingPromptId] = useState<string | null>(null);
 
   // Fetch prompts
-  const fetchPrompts = async () => {
+  const fetchPrompts = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -53,7 +53,7 @@ export function useSupabasePrompts() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   // Create prompt
   const createPrompt = async (promptData: PromptData) => {

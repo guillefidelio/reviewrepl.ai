@@ -1,20 +1,21 @@
 'use client';
 
-import { useAuth } from '@/lib/hooks/useAuth';
-import { usePrompts } from '@/lib/hooks/usePrompts';
+import { useState } from 'react';
+import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
+import { useSupabasePrompts } from '@/lib/hooks/useSupabasePrompts';
 import { PromptForm } from './PromptForm';
 
 export function Prompts() {
-  const { user } = useAuth();
+  const { user } = useSupabaseAuth();
   const {
     data: prompts,
     loading,
     error,
-    isEditing,
-    editingPromptId,
-    toggleEditMode,
     clearError,
-  } = usePrompts(user?.uid || '');
+  } = useSupabasePrompts();
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingPromptId, setEditingPromptId] = useState<string | null>(null);
 
   // Debug: Log every render to see if component is re-rendering
   console.log('Prompts render:', { 
@@ -89,7 +90,10 @@ export function Prompts() {
       return (
         <PromptForm 
           prompt={editingPrompt}
-          onCancel={() => toggleEditMode()}
+          onCancel={() => {
+            setIsEditing(false);
+            setEditingPromptId(null);
+          }}
         />
       );
     }
@@ -147,7 +151,7 @@ export function Prompts() {
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                       ★ {prompt.rating.toFixed(1)}
                     </span>
-                    {prompt.hasText && (
+                    {prompt.has_text && (
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                         Has Text
                       </span>
@@ -157,13 +161,16 @@ export function Prompts() {
                     <p className="whitespace-pre-wrap line-clamp-3">{prompt.content}</p>
                   </div>
                   <div className="flex items-center space-x-4 text-xs text-gray-500">
-                    <span>Created: {prompt.createdAt.toLocaleDateString()}</span>
-                    <span>Updated: {prompt.updatedAt.toLocaleDateString()}</span>
+                    <span>Created: {prompt.created_at ? new Date(prompt.created_at).toLocaleDateString() : 'N/A'}</span>
+                    <span>Updated: {prompt.updated_at ? new Date(prompt.updated_at).toLocaleDateString() : 'N/A'}</span>
                   </div>
                 </div>
                 <div className="flex space-x-2 ml-4">
                   <button
-                    onClick={() => toggleEditMode(prompt.id)}
+                    onClick={() => {
+                  setIsEditing(true);
+                  setEditingPromptId(prompt.id);
+                }}
                     className="inline-flex items-center px-2 py-1 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                   >
                     <svg className="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

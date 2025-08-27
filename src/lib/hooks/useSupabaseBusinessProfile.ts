@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
 import { supabase } from '@/lib/supabase';
 
@@ -76,7 +76,7 @@ export function useSupabaseBusinessProfile() {
   const [error, setError] = useState<string | null>(null);
 
   // Fetch business profile
-  const fetchBusinessProfile = async () => {
+  const fetchBusinessProfile = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -100,7 +100,7 @@ export function useSupabaseBusinessProfile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   // Create business profile
   const createBusinessProfile = async (profileData: BusinessProfileData) => {

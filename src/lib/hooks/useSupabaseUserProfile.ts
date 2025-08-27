@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
 import { supabase } from '@/lib/supabase';
 
@@ -110,7 +110,7 @@ export function useSupabaseUserProfile() {
   const [error, setError] = useState<string | null>(null);
 
   // Fetch user profile from the main users table
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -134,7 +134,7 @@ export function useSupabaseUserProfile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   // Create user profile in the main users table
   const createUserProfile = async (profileData: UserProfileData) => {

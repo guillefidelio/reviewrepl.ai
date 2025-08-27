@@ -1,20 +1,24 @@
 'use client';
 
-import { useAuth } from '@/lib/hooks/useAuth';
+import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
+import { useSupabaseUserProfile } from '@/lib/hooks/useSupabaseUserProfile';
 import { useState } from 'react';
 
 export function ProfileTest() {
   const { 
     user, 
-    userProfile, 
     loading, 
-    profileLoading, 
     error, 
-    profileError, 
-    clearError, 
-    clearProfileError, 
-    refreshUserProfile 
-  } = useAuth();
+    clearError
+  } = useSupabaseAuth();
+  
+  const { 
+    data: userProfile, 
+    loading: profileLoading, 
+    error: profileError, 
+    clearError: clearProfileError, 
+    fetchUserProfile 
+  } = useSupabaseUserProfile();
   
   const [testResults, setTestResults] = useState<string[]>([]);
 
@@ -30,7 +34,7 @@ export function ProfileTest() {
     if (user) {
       addResult('✅ User is authenticated');
       addResult(`📧 User email: ${user.email}`);
-      addResult(`🆔 User UID: ${user.uid}`);
+      addResult(`🆔 User UID: ${user.id}`);
     } else {
       addResult('❌ User is not authenticated');
       return;
@@ -52,10 +56,10 @@ export function ProfileTest() {
     // Test 3: Profile data
     if (userProfile) {
       addResult('✅ User profile data loaded successfully');
-      addResult(`👤 Display name: ${userProfile.displayName || 'Not set'}`);
+      addResult(`👤 Display name: ${userProfile.first_name || 'Not set'}`);
       addResult(`📱 Phone: ${userProfile.phone || 'Not provided'}`);
-      addResult(`📅 Created: ${userProfile.createdAt.toLocaleDateString()}`);
-      addResult(`🔄 Updated: ${userProfile.updatedAt.toLocaleDateString()}`);
+      addResult(`📅 Created: ${userProfile.created_at ? new Date(userProfile.created_at).toLocaleDateString() : 'N/A'}`);
+      addResult(`🔄 Updated: ${userProfile.updated_at ? new Date(userProfile.updated_at).toLocaleDateString() : 'N/A'}`);
     } else {
       addResult('⚠️ User profile data not available');
     }
@@ -76,7 +80,7 @@ export function ProfileTest() {
     // Test 5: Profile refresh functionality
     addResult('🔄 Testing profile refresh functionality...');
     try {
-      await refreshUserProfile();
+      await fetchUserProfile();
       addResult('✅ Profile refresh function executed successfully');
     } catch (err) {
       addResult(`❌ Profile refresh failed: ${err}`);
@@ -145,7 +149,7 @@ export function ProfileTest() {
                 Run Profile Tests
               </button>
               <button
-                onClick={refreshUserProfile}
+                onClick={fetchUserProfile}
                 className="w-full px-3 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 Refresh Profile

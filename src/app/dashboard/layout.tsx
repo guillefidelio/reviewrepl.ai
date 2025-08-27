@@ -11,7 +11,7 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { user, session, loading, signOut } = useSupabaseAuth();
+  const { user, loading, signOut } = useSupabaseAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 

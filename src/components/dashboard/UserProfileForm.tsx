@@ -3,7 +3,16 @@
 import { useState, useEffect } from 'react';
 import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
 
-import { useSupabaseUserProfile, type UserProfile, type UserProfileData } from '@/lib/hooks/useSupabaseUserProfile';
+import { useSupabaseUserProfile, type UserProfile } from '@/lib/hooks/useSupabaseUserProfile';
+
+interface UserProfileFormData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  company: string;
+  position: string;
+}
 
 interface UserProfileFormProps {
   userProfile?: UserProfile | null;

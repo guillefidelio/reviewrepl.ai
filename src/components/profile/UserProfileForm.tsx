@@ -1,28 +1,35 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/hooks/useAuth';
-import { useUserProfile } from '@/lib/hooks/useUserProfile';
-import { UserProfile, UserProfileFormData } from '@/lib/types';
+import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
+import { useSupabaseUserProfile, type UserProfile } from '@/lib/hooks/useSupabaseUserProfile';
+
+interface UserProfileFormData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  company: string;
+  position: string;
+}
 
 interface UserProfileFormProps {
   userProfile?: UserProfile | null;
   onCancel: () => void;
+  onSuccess: () => void;
 }
 
-export function UserProfileForm({ userProfile, onCancel }: UserProfileFormProps) {
-  const { user } = useAuth();
-  const { createUserProfile, updateUserProfile, loading } = useUserProfile(user?.uid || '');
+export function UserProfileForm({ userProfile, onCancel, onSuccess }: UserProfileFormProps) {
+  const { user } = useSupabaseAuth();
+  const { createUserProfile, updateUserProfile, loading } = useSupabaseUserProfile();
   
   const [formData, setFormData] = useState<UserProfileFormData>({
-    displayName: '',
+    first_name: '',
+    last_name: '',
     email: '',
-    bio: '',
     phone: '',
-    location: '',
-    website: '',
     company: '',
-    jobTitle: '',
+    position: '',
   });
 
   const [errors, setErrors] = useState<Partial<UserProfileFormData>>({});
@@ -32,35 +39,38 @@ export function UserProfileForm({ userProfile, onCancel }: UserProfileFormProps)
   useEffect(() => {
     if (userProfile) {
       setFormData({
-        displayName: userProfile.displayName || '',
+        first_name: userProfile.first_name || '',
+        last_name: userProfile.last_name || '',
         email: userProfile.email || '',
-        bio: userProfile.bio || '',
         phone: userProfile.phone || '',
-        location: userProfile.location || '',
-        website: userProfile.website || '',
         company: userProfile.company || '',
-        jobTitle: userProfile.jobTitle || '',
+        position: userProfile.position || '',
       });
+    } else if (user) {
+      // Initialize with user's email when creating new profile
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || '',
+      }));
     }
-  }, [userProfile]);
+  }, [userProfile, user]);
 
   // Validate form data
   const validateForm = (): boolean => {
     const newErrors: Partial<UserProfileFormData> = {};
 
-    if (!formData.displayName.trim()) {
-      newErrors.displayName = 'Display name is required';
+    if (!formData.first_name.trim()) {
+      newErrors.first_name = 'First name is required';
+    }
+
+    if (!formData.last_name.trim()) {
+      newErrors.last_name = 'Last name is required';
     }
 
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!isValidEmail(formData.email)) {
       newErrors.email = 'Please enter a valid email address';
-    }
-
-    // Validate website URL if provided
-    if (formData.website && !isValidUrl(formData.website)) {
-      newErrors.website = 'Please enter a valid URL';
     }
 
     setErrors(newErrors);
@@ -73,15 +83,7 @@ export function UserProfileForm({ userProfile, onCancel }: UserProfileFormProps)
     return emailRegex.test(email);
   };
 
-  // Simple URL validation
-  const isValidUrl = (url: string): boolean => {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  };
+
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,7 +105,7 @@ export function UserProfileForm({ userProfile, onCancel }: UserProfileFormProps)
       }
       // The real-time subscription will automatically update the state
       // No need to manually update state here
-      onCancel(); // Close the form after successful create/update
+      onSuccess(); // Close the form after successful create/update
     } catch (error) {
       console.error('Error saving user profile:', error);
       // Error is handled by the hook and displayed in parent
@@ -144,24 +146,45 @@ export function UserProfileForm({ userProfile, onCancel }: UserProfileFormProps)
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Display Name */}
+        {/* First Name */}
         <div>
-          <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
-            Display Name <span className="text-red-500">*</span>
+          <label htmlFor="first_name" className="block text-sm font-medium text-gray-700">
+            First Name <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
-            id="displayName"
-            value={formData.displayName}
-            onChange={(e) => handleInputChange('displayName', e.target.value)}
+            id="first_name"
+            value={formData.first_name}
+            onChange={(e) => handleInputChange('first_name', e.target.value)}
             className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
-              errors.displayName ? 'border-red-300' : ''
+              errors.first_name ? 'border-red-300' : ''
             }`}
-            placeholder="Enter your display name"
+            placeholder="Enter your first name"
             disabled={isFormDisabled}
           />
-          {errors.displayName && (
-            <p className="mt-1 text-sm text-red-600">{errors.displayName}</p>
+          {errors.first_name && (
+            <p className="mt-1 text-sm text-red-600">{errors.first_name}</p>
+          )}
+        </div>
+
+        {/* Last Name */}
+        <div>
+          <label htmlFor="last_name" className="block text-sm font-medium text-gray-700">
+            Last Name <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="last_name"
+            value={formData.last_name}
+            onChange={(e) => handleInputChange('last_name', e.target.value)}
+            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
+              errors.last_name ? 'border-red-300' : ''
+            }`}
+            placeholder="Enter your last name"
+            disabled={isFormDisabled}
+          />
+          {errors.last_name && (
+            <p className="mt-1 text-sm text-red-600">{errors.last_name}</p>
           )}
         </div>
 
@@ -186,22 +209,6 @@ export function UserProfileForm({ userProfile, onCancel }: UserProfileFormProps)
           )}
         </div>
 
-        {/* Bio */}
-        <div>
-          <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
-            Bio
-          </label>
-          <textarea
-            id="bio"
-            value={formData.bio}
-            onChange={(e) => handleInputChange('bio', e.target.value)}
-            rows={3}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            placeholder="Tell us about yourself"
-            disabled={isFormDisabled}
-          />
-        </div>
-
         {/* Phone */}
         <div>
           <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
@@ -216,43 +223,6 @@ export function UserProfileForm({ userProfile, onCancel }: UserProfileFormProps)
             placeholder="Enter your phone number"
             disabled={isFormDisabled}
           />
-        </div>
-
-        {/* Location */}
-        <div>
-          <label htmlFor="location" className="block text-sm font-medium text-gray-700">
-            Location
-          </label>
-          <input
-            type="text"
-            id="location"
-            value={formData.location}
-            onChange={(e) => handleInputChange('location', e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            placeholder="City, State or Remote"
-            disabled={isFormDisabled}
-          />
-        </div>
-
-        {/* Website */}
-        <div>
-          <label htmlFor="website" className="block text-sm font-medium text-gray-700">
-            Website
-          </label>
-          <input
-            type="url"
-            id="website"
-            value={formData.website}
-            onChange={(e) => handleInputChange('website', e.target.value)}
-            className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm ${
-              errors.website ? 'border-red-300' : ''
-            }`}
-            placeholder="https://yourwebsite.com"
-            disabled={isFormDisabled}
-          />
-          {errors.website && (
-            <p className="mt-1 text-sm text-red-600">{errors.website}</p>
-          )}
         </div>
 
         {/* Company */}
@@ -271,16 +241,16 @@ export function UserProfileForm({ userProfile, onCancel }: UserProfileFormProps)
           />
         </div>
 
-        {/* Job Title */}
+        {/* Position */}
         <div>
-          <label htmlFor="jobTitle" className="block text-sm font-medium text-gray-700">
-            Job Title
+          <label htmlFor="position" className="block text-sm font-medium text-gray-700">
+            Position
           </label>
           <input
             type="text"
-            id="jobTitle"
-            value={formData.jobTitle}
-            onChange={(e) => handleInputChange('jobTitle', e.target.value)}
+            id="position"
+            value={formData.position}
+            onChange={(e) => handleInputChange('position', e.target.value)}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
             placeholder="Enter your job title"
             disabled={isFormDisabled}

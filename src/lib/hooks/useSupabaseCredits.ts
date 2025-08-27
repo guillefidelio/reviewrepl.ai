@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
 import { supabase } from '@/lib/supabase';
 
@@ -17,7 +17,7 @@ export function useSupabaseCredits() {
   const [error, setError] = useState<string | null>(null);
 
   // Fetch credits from the main users table
-  const fetchCredits = async () => {
+  const fetchCredits = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -43,7 +43,7 @@ export function useSupabaseCredits() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   // Initialize credits for new user in the main users table
   const initializeCredits = async () => {
@@ -87,7 +87,11 @@ export function useSupabaseCredits() {
     try {
       setError(null);
 
-      const updateData: any = {
+      const updateData: {
+        credits_available: number;
+        credits_last_updated: string;
+        credits_total?: number;
+      } = {
         credits_available: newAvailable,
         credits_last_updated: new Date().toISOString()
       };

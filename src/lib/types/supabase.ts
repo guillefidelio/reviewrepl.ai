@@ -15,13 +15,10 @@ export type {
 } from '@/lib/hooks/useSupabasePrompts';
 
 export type {
-  AnsweringMode,
-  AnsweringModeData,
-  AnsweringModeRecord
+  AnsweringMode
 } from '@/lib/hooks/useSupabaseAnsweringMode';
 
 export type {
-  CreditsBalance,
-  CreditsRecord
+  CreditsBalance
 } from '@/lib/hooks/useSupabaseCredits';
 
