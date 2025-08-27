@@ -6,7 +6,10 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "worker:build": "node src/workers/build-worker.js",
+    "worker:start": "cd dist/workers && npm start",
+    "worker:dev": "ts-node -r dotenv/config src/workers/job-processor.ts"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",
@@ -17,11 +20,12 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.540.0",
-    "next": "15.4.7",
+    "next": "^15.5.2",
     "next-auth": "^4.24.11",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "tailwind-merge": "^3.3.1"
+    "tailwind-merge": "^3.3.1",
+    "tw-animate-css": "^1.3.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -29,10 +33,12 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.2.1",
     "eslint": "^9",
     "eslint-config-next": "15.4.7",
     "tailwindcss": "^4",
-    "tw-animate-css": "^1.3.7",
+    "tailwindcss-animate": "^1.0.7",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
