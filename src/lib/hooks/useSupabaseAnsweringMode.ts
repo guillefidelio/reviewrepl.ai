@@ -78,7 +78,7 @@ export function useSupabaseAnsweringMode() {
   // Fetch mode on mount and when user changes
   useEffect(() => {
     fetchAnsweringMode();
-  }, [user]);
+  }, [user, fetchAnsweringMode]);
 
   return {
     selectedMode,

@@ -178,7 +178,7 @@ export function useSupabaseBusinessProfile() {
       setData(null);
       setLoading(false);
     }
-  }, [user]);
+  }, [user, fetchBusinessProfile]);
 
   return {
     data,

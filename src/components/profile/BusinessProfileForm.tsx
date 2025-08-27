@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
 import { useSupabaseBusinessProfile, type BusinessProfile, type BusinessProfileFormData } from '@/lib/hooks/useSupabaseBusinessProfile';
 
 interface BusinessProfileFormProps {
@@ -11,7 +10,6 @@ interface BusinessProfileFormProps {
 }
 
 export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: BusinessProfileFormProps) {
-  const { user } = useSupabaseAuth();
   const { createBusinessProfile, updateBusinessProfile, loading } = useSupabaseBusinessProfile();
   
   const [formData, setFormData] = useState<BusinessProfileFormData>({

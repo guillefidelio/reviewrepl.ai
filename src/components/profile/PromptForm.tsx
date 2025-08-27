@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
 import { useSupabasePrompts, type Prompt } from '@/lib/hooks/useSupabasePrompts';
 
 interface PromptFormProps {
@@ -10,7 +9,6 @@ interface PromptFormProps {
 }
 
 export function PromptForm({ prompt, onCancel }: PromptFormProps) {
-  const { user } = useSupabaseAuth();
   const { updatePrompt, loading } = useSupabasePrompts();
   
   const [formData, setFormData] = useState<{ content: string }>({

@@ -130,7 +130,7 @@ export function useSupabaseCredits() {
   // Fetch credits on mount and when user changes
   useEffect(() => {
     fetchCredits();
-  }, [user]);
+  }, [user, fetchCredits]);
 
   return {
     balance,

@@ -11,8 +11,6 @@ export function BusinessProfile() {
     data: businessProfile,
     loading,
     error,
-    createBusinessProfile,
-    updateBusinessProfile,
     clearError,
   } = useSupabaseBusinessProfile();
   

@@ -162,7 +162,7 @@ export function useSupabasePrompts() {
       setData([]);
       setLoading(false);
     }
-  }, [user]);
+  }, [user, fetchPrompts]);
 
   return {
     data,

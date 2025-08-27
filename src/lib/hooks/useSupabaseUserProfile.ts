@@ -224,7 +224,7 @@ export function useSupabaseUserProfile() {
       setData(null);
       setLoading(false);
     }
-  }, [user]);
+  }, [user, fetchUserProfile]);
 
   return {
     data,
