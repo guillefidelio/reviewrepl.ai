@@ -102,19 +102,12 @@ export function getSystemPromptForJob(
   
   // Check if we have a custom prompt (Pro mode)
   if (customPrompt && customPrompt.trim().length > 0) {
-    // For Pro mode with custom prompt, create a focused system prompt
+    // For Pro mode with custom prompt, use ONLY the custom prompt
     return `You are a professional business representative responding to a customer review.
 
 ${customPrompt}
 
-Additional Guidelines:
-- Keep responses professional and empathetic
-- Address the customer's feedback appropriately
-- Be authentic and genuine in your response
-- Use appropriate emojis if the custom prompt requests them
-- Stay within the specified length requirements
-
-Follow the custom instructions precisely while maintaining professional business standards.`;
+Answer to this review:`;
   }
   
   // For Simple mode or when no custom prompt, use the full business profile context
