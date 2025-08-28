@@ -67,12 +67,51 @@ export async function fetchBusinessProfile(accessToken: string): Promise<Record<
 }
 
 /**
+ * Fetches custom prompt based on review rating for Pro mode
+ */
+export async function fetchCustomPrompt(accessToken: string, rating: number): Promise<string | null> {
+  try {
+    const response = await fetch('/api/v1/me/business-profile', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = await response.json();
+    const businessProfile = data.business_profile;
+    
+    if (!businessProfile) return null;
+
+    // Determine which prompt to use based on rating
+    let promptField: string | null = null;
+    
+    if (rating <= 2) {
+      promptField = businessProfile.custom_prompt_1_2_stars;
+    } else if (rating === 3) {
+      promptField = businessProfile.custom_prompt_3_stars;
+    } else {
+      promptField = businessProfile.custom_prompt_4_5_stars;
+    }
+
+    return promptField;
+  } catch (error) {
+    console.error('Error fetching custom prompt:', error);
+    return null;
+  }
+}
+
+/**
  * Creates a complete AI generation job with business profile context
  * This is the main function the extension should use
  */
 export async function createAIGenerationJob(
   reviewText: string,
-  accessToken: string, // Add access token parameter
+  accessToken: string,
   options: {
     customPrompt?: string;
     tone?: string;
@@ -81,14 +120,30 @@ export async function createAIGenerationJob(
   } = {}
 ): Promise<Response> {
   try {
-    // First, try to fetch business profile
-    const businessProfile = await fetchBusinessProfile(accessToken);
+    const { userPreferences } = options;
+    const mode = userPreferences?.mode as 'simple' | 'pro';
+    const rating = userPreferences?.reviewRating as number;
+    
+    let businessProfile: Record<string, unknown> | null = null;
+    let customPrompt: string | undefined = undefined;
+
+    if (mode === 'simple') {
+      // For Simple mode: fetch business profile and use it
+      businessProfile = await fetchBusinessProfile(accessToken);
+    } else if (mode === 'pro') {
+      // For Pro mode: fetch the actual custom prompt from prompts table
+      if (rating) {
+        customPrompt = await fetchCustomPrompt(accessToken, rating) || undefined;
+      }
+      // Don't include business profile for Pro mode
+    }
     
     // Create the job request
     const jobRequest = await createJobWithBusinessProfile(
       {
         reviewText,
-        ...options
+        ...options,
+        customPrompt
       },
       businessProfile || undefined
     );

@@ -97,12 +97,12 @@ export default function SingleApiCallDemoPage() {
 
     try {
       const response = await createAIGenerationJob(reviewText, session.access_token, {
-        customPrompt: mode === 'pro' ? 'Pro mode with custom instructions' : undefined,
         tone,
         maxLength: parseInt(maxLength.toString()),
         userPreferences: {
           mode,
-          reviewerName: reviewerName.trim() || undefined
+          reviewerName: reviewerName.trim() || undefined,
+          reviewRating: reviewRating
         }
       });
 
