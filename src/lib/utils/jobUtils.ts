@@ -88,10 +88,10 @@ export async function fetchCustomPrompt(accessToken: string, rating: number): Pr
     }
 
     const userData = await userResponse.json();
-    const userId = userData.id;
+    const userId = userData.user?.id;
     
     if (!userId) {
-      console.log('🔍 DEBUG: No user ID found');
+      console.log('🔍 DEBUG: No user ID found in response:', userData);
       return null;
     }
 
@@ -181,6 +181,10 @@ export async function createAIGenerationJob(
       if (rating) {
         customPrompt = await fetchCustomPrompt(accessToken, rating) || undefined;
         console.log('🔍 DEBUG: Custom prompt fetched:', customPrompt ? `"${customPrompt.substring(0, 50)}..."` : 'No');
+        
+        if (!customPrompt) {
+          console.log('🔍 DEBUG: WARNING: No custom prompt found for Pro mode! This will fall back to generic prompt.');
+        }
       } else {
         console.log('🔍 DEBUG: No rating provided for Pro mode');
       }
