@@ -100,22 +100,31 @@ export function getSystemPromptForJob(
   // Convert Record<string, unknown> to BusinessProfile if needed
   const profile = businessProfile as BusinessProfile;
   
-  const context: SystemPromptContext = {
-    businessProfile: profile,
-    mode: customPrompt ? 'pro' : 'simple',
-    customPrompt
-  };
+  // Check if we have a custom prompt (Pro mode)
+  if (customPrompt && customPrompt.trim().length > 0) {
+    // For Pro mode with custom prompt, create a focused system prompt
+    return `You are a professional business representative responding to a customer review.
 
-  // Determine review type from job type or custom prompt content
-  if (customPrompt) {
-    if (customPrompt.toLowerCase().includes('negative review')) {
-      context.reviewType = 'negative';
-    } else if (customPrompt.toLowerCase().includes('positive review')) {
-      context.reviewType = 'positive';
-    } else if (customPrompt.toLowerCase().includes('neutral review')) {
-      context.reviewType = 'neutral';
-    }
+${customPrompt}
+
+Additional Guidelines:
+- Keep responses professional and empathetic
+- Address the customer's feedback appropriately
+- Be authentic and genuine in your response
+- Use appropriate emojis if the custom prompt requests them
+- Stay within the specified length requirements
+
+Follow the custom instructions precisely while maintaining professional business standards.`;
   }
-
-  return generateSystemPrompt(context);
+  
+  // For Simple mode or when no custom prompt, use the full business profile context
+  if (profile && profile.business_name) {
+    return generateSystemPrompt({
+      businessProfile: profile,
+      mode: 'simple'
+    });
+  }
+  
+  // Fallback for edge cases
+  return `You are a professional business response generator. Create a professional response to customer reviews. Be helpful, professional, and address the customer's feedback appropriately.`;
 }

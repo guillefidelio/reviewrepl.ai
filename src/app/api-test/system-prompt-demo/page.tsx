@@ -31,7 +31,7 @@ export default function SystemPromptDemoPage() {
       businessProfile,
       mode,
       customPrompt: mode === 'pro' ? customPrompt : undefined,
-      reviewType: mode === 'pro' ? 'positive' : undefined // You could make this configurable
+      reviewType: mode === 'pro' ? ('positive' as const) : undefined
     };
 
     const systemPrompt = generateSystemPrompt(context);
@@ -45,7 +45,7 @@ export default function SystemPromptDemoPage() {
       businessProfile,
       mode,
       customPrompt: mode === 'pro' ? customPrompt : undefined,
-      reviewType: mode === 'pro' ? 'positive' : undefined
+      reviewType: mode === 'pro' ? ('positive' as const) : undefined
     };
 
     return generateSystemPrompt(context);

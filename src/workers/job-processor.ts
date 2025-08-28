@@ -239,12 +239,18 @@ class JobProcessorWorker {
     // Generate the appropriate system prompt
     let systemPrompt: string;
     
-    if (business_profile && typeof business_profile === 'object') {
-      // Use business profile to generate contextual system prompt
+    if (custom_prompt && typeof custom_prompt === 'string' && custom_prompt.trim().length > 0) {
+      // For Pro mode with custom prompt, use the custom prompt as the primary instruction
+      systemPrompt = getSystemPromptForJob(
+        {}, // Empty business profile for Pro mode
+        'ai_generation',
+        custom_prompt
+      );
+    } else if (business_profile && typeof business_profile === 'object') {
+      // Use business profile to generate contextual system prompt for Simple mode
       systemPrompt = getSystemPromptForJob(
         business_profile as Record<string, unknown>,
-        'ai_generation',
-        custom_prompt as string | undefined
+        'ai_generation'
       );
     } else {
       // Fallback to basic prompt

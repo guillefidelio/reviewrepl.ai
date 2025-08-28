@@ -71,6 +71,8 @@ export async function fetchBusinessProfile(accessToken: string): Promise<Record<
  */
 export async function fetchCustomPrompt(accessToken: string, rating: number): Promise<string | null> {
   try {
+    console.log('🔍 DEBUG: fetchCustomPrompt called with rating:', rating);
+    
     const response = await fetch('/api/v1/me/business-profile', {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -79,23 +81,37 @@ export async function fetchCustomPrompt(accessToken: string, rating: number): Pr
     });
     
     if (!response.ok) {
+      console.log('🔍 DEBUG: fetchCustomPrompt response not ok:', response.status);
       return null;
     }
 
     const data = await response.json();
+    console.log('🔍 DEBUG: fetchCustomPrompt response data keys:', Object.keys(data));
+    
     const businessProfile = data.business_profile;
+    console.log('🔍 DEBUG: Business profile found:', businessProfile ? 'Yes' : 'No');
     
     if (!businessProfile) return null;
+
+    console.log('🔍 DEBUG: Business profile keys:', Object.keys(businessProfile));
+    console.log('🔍 DEBUG: Custom prompt fields:', {
+      '1-2_stars': businessProfile.custom_prompt_1_2_stars,
+      '3_stars': businessProfile.custom_prompt_3_stars,
+      '4-5_stars': businessProfile.custom_prompt_4_5_stars
+    });
 
     // Determine which prompt to use based on rating
     let promptField: string | null = null;
     
     if (rating <= 2) {
       promptField = businessProfile.custom_prompt_1_2_stars;
+      console.log('🔍 DEBUG: Using 1-2 stars prompt:', promptField);
     } else if (rating === 3) {
       promptField = businessProfile.custom_prompt_3_stars;
+      console.log('🔍 DEBUG: Using 3 stars prompt:', promptField);
     } else {
       promptField = businessProfile.custom_prompt_4_5_stars;
+      console.log('🔍 DEBUG: Using 4-5 stars prompt:', promptField);
     }
 
     return promptField;
@@ -124,19 +140,29 @@ export async function createAIGenerationJob(
     const mode = userPreferences?.mode as 'simple' | 'pro';
     const rating = userPreferences?.reviewRating as number;
     
+    console.log('🔍 DEBUG: createAIGenerationJob called with:', { mode, rating, userPreferences });
+    
     let businessProfile: Record<string, unknown> | null = null;
     let customPrompt: string | undefined = undefined;
 
     if (mode === 'simple') {
       // For Simple mode: fetch business profile and use it
+      console.log('🔍 DEBUG: Simple mode - fetching business profile');
       businessProfile = await fetchBusinessProfile(accessToken);
+      console.log('🔍 DEBUG: Business profile fetched:', businessProfile ? 'Yes' : 'No');
     } else if (mode === 'pro') {
       // For Pro mode: fetch the actual custom prompt from prompts table
+      console.log('🔍 DEBUG: Pro mode - fetching custom prompt for rating:', rating);
       if (rating) {
         customPrompt = await fetchCustomPrompt(accessToken, rating) || undefined;
+        console.log('🔍 DEBUG: Custom prompt fetched:', customPrompt ? `"${customPrompt.substring(0, 50)}..."` : 'No');
+      } else {
+        console.log('🔍 DEBUG: No rating provided for Pro mode');
       }
       // Don't include business profile for Pro mode
     }
+    
+    console.log('🔍 DEBUG: Final values - businessProfile:', businessProfile ? 'Yes' : 'No', 'customPrompt:', customPrompt ? 'Yes' : 'No');
     
     // Create the job request
     const jobRequest = await createJobWithBusinessProfile(
@@ -147,6 +173,8 @@ export async function createAIGenerationJob(
       },
       businessProfile || undefined
     );
+
+    console.log('🔍 DEBUG: Job request payload:', JSON.stringify(jobRequest.payload, null, 2));
 
     // Submit the job with authorization header
     const response = await fetch('/api/v1/jobs', {
