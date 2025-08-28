@@ -171,7 +171,6 @@ async function listJobsHandler(request: AuthenticatedRequest) {
     );
   }
 }
-
 // Helper function to determine credits required for different job types
 function getCreditsRequired(jobType: string): number {
   switch (jobType) {
@@ -191,3 +190,4 @@ function getCreditsRequired(jobType: string): number {
 // Export the protected handlers
 export const POST = withAuth(createJobHandler);
 export const GET = withAuth(listJobsHandler);
+

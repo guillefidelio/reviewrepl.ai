@@ -2,8 +2,8 @@
 process.env = { ...process.env };
 
 // Load environment variables from .env files
-import dotenv from "dotenv";
-dotenv.config();
+// Note: dotenv is not available, so we'll rely on environment variables being set externally
+// or use a different approach if needed
 
 // Debug: Check if environment variables are loaded
 console.log("🔍 DEBUG: Environment variables check");
@@ -15,6 +15,7 @@ console.log("─".repeat(60));
 
 import { createClient } from '@supabase/supabase-js';
 import { Job, JobStatus } from '../lib/types/jobs';
+import { getSystemPromptForJob } from '../lib/utils/systemPromptGenerator';
 
 // Configuration
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -224,7 +225,7 @@ class JobProcessorWorker {
 
   // Process AI generation job
   private async processAIGeneration(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-    const { review_text, tone = 'professional', max_length = 150 } = payload;
+    const { review_text, tone = 'professional', max_length = 150, business_profile, custom_prompt } = payload;
 
     if (!review_text || typeof review_text !== 'string') {
       throw new Error('review_text is required and must be a string');
@@ -235,17 +236,34 @@ class JobProcessorWorker {
 
     console.log(`🤖 Generating AI response for review: "${review_text.substring(0, 50)}..."`);
 
-    // Call OpenAI API
+    // Generate the appropriate system prompt
+    let systemPrompt: string;
+    
+    if (business_profile && typeof business_profile === 'object') {
+      // Use business profile to generate contextual system prompt
+      systemPrompt = getSystemPromptForJob(
+        business_profile as Record<string, unknown>,
+        'ai_generation',
+        custom_prompt as string | undefined
+      );
+    } else {
+      // Fallback to basic prompt
+      systemPrompt = `You are a professional business response generator. Create a ${tone} response to customer reviews. Keep responses under ${maxLength} characters. Be helpful, professional, and address the customer's feedback appropriately.`;
+    }
+
+    console.log(`📝 Using system prompt: ${systemPrompt.substring(0, 100)}...`);
+
+    // Call OpenAI API with the generated system prompt
     const response = await this.callOpenAI({
       model: 'gpt-4o-mini',
       messages: [
         {
           role: 'system',
-          content: `You are a professional business response generator. Create a ${tone} response to customer reviews. Keep responses under ${maxLength} characters. Be helpful, professional, and address the customer's feedback appropriately.`
+          content: systemPrompt
         },
         {
           role: 'user',
-          content: `Generate a ${tone} response to this customer review: "${review_text}"`
+          content: `Generate a response to this customer review: "${review_text}"`
         }
       ],
       max_tokens: Math.floor(maxLength / 4), // Rough estimate
@@ -259,7 +277,8 @@ class JobProcessorWorker {
       tokens_used: response.usage?.total_tokens || 0,
       model_used: 'gpt-4o-mini',
       tone_used: tone,
-      max_length_requested: maxLength
+      max_length_requested: maxLength,
+      system_prompt_used: systemPrompt // Store the system prompt used
     };
   }
 

@@ -56,6 +56,7 @@ export type JobType = typeof JOB_TYPES[keyof typeof JOB_TYPES];
 export interface AIGenerationPayload {
   review_text: string;
   business_profile?: Record<string, unknown>;
+  custom_prompt?: string; // For pro mode custom prompts
   user_preferences?: Record<string, unknown>;
   max_length?: number;
   tone?: string;
