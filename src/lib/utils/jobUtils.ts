@@ -73,45 +73,70 @@ export async function fetchCustomPrompt(accessToken: string, rating: number): Pr
   try {
     console.log('🔍 DEBUG: fetchCustomPrompt called with rating:', rating);
     
-    const response = await fetch('/api/v1/me/business-profile', {
+    // First, get the current user's ID from the access token
+    // We need to decode the JWT or make a call to get user info
+    const userResponse = await fetch('/api/v1/me', {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
     });
     
-    if (!response.ok) {
-      console.log('🔍 DEBUG: fetchCustomPrompt response not ok:', response.status);
+    if (!userResponse.ok) {
+      console.log('🔍 DEBUG: fetchCustomPrompt user response not ok:', userResponse.status);
       return null;
     }
 
-    const data = await response.json();
-    console.log('🔍 DEBUG: fetchCustomPrompt response data keys:', Object.keys(data));
+    const userData = await userResponse.json();
+    const userId = userData.id;
     
-    const businessProfile = data.business_profile;
-    console.log('🔍 DEBUG: Business profile found:', businessProfile ? 'Yes' : 'No');
-    
-    if (!businessProfile) return null;
+    if (!userId) {
+      console.log('🔍 DEBUG: No user ID found');
+      return null;
+    }
 
-    console.log('🔍 DEBUG: Business profile keys:', Object.keys(businessProfile));
-    console.log('🔍 DEBUG: Custom prompt fields:', {
-      '1-2_stars': businessProfile.custom_prompt_1_2_stars,
-      '3_stars': businessProfile.custom_prompt_3_stars,
-      '4-5_stars': businessProfile.custom_prompt_4_5_stars
+    console.log('🔍 DEBUG: User ID:', userId);
+    
+    // Now fetch the custom prompt from the prompts table
+    const promptResponse = await fetch(`/api/v1/me/prompts?rating=${rating}`, {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
     });
+    
+    if (!promptResponse.ok) {
+      console.log('🔍 DEBUG: fetchCustomPrompt prompt response not ok:', promptResponse.status);
+      return null;
+    }
 
-    // Determine which prompt to use based on rating
+    const promptData = await promptResponse.json();
+    console.log('🔍 DEBUG: Prompt response data:', promptData);
+    
+    // Find the prompt that matches the rating
     let promptField: string | null = null;
     
     if (rating <= 2) {
-      promptField = businessProfile.custom_prompt_1_2_stars;
-      console.log('🔍 DEBUG: Using 1-2 stars prompt:', promptField);
+      // For 1-2 stars, look for negative review prompt
+      const negativePrompt = promptData.prompts?.find((p: any) => 
+        p.content.toLowerCase().includes('negative review') || p.content.toLowerCase().includes('bad review')
+      );
+      promptField = negativePrompt?.content || null;
+      console.log('🔍 DEBUG: Using negative review prompt:', promptField ? 'Found' : 'Not found');
     } else if (rating === 3) {
-      promptField = businessProfile.custom_prompt_3_stars;
-      console.log('🔍 DEBUG: Using 3 stars prompt:', promptField);
+      // For 3 stars, look for neutral review prompt
+      const neutralPrompt = promptData.prompts?.find((p: any) => 
+        p.content.toLowerCase().includes('neutral review') || p.content.toLowerCase().includes('3 star')
+      );
+      promptField = neutralPrompt?.content || null;
+      console.log('🔍 DEBUG: Using neutral review prompt:', promptField ? 'Found' : 'Not found');
     } else {
-      promptField = businessProfile.custom_prompt_4_5_stars;
-      console.log('🔍 DEBUG: Using 4-5 stars prompt:', promptField);
+      // For 4-5 stars, look for positive review prompt
+      const positivePrompt = promptData.prompts?.find((p: any) => 
+        p.content.toLowerCase().includes('positive review') || p.content.toLowerCase().includes('good review')
+      );
+      promptField = positivePrompt?.content || null;
+      console.log('🔍 DEBUG: Using positive review prompt:', promptField ? 'Found' : 'Not found');
     }
 
     return promptField;
