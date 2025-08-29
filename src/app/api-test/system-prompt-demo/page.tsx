@@ -149,7 +149,7 @@ export default function SystemPromptDemoPage() {
               </div>
             ) : (
               <div className="text-center text-muted-foreground py-8">
-                <p>Click "Generate System Prompt" to see the result</p>
+                <p>Click &quot;Generate System Prompt&quot; to see the result</p>
               </div>
             )}
           </CardContent>

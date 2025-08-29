@@ -2,9 +2,8 @@ import { CreateJobRequest, JOB_TYPES } from '@/lib/types/jobs';
 
 export interface JobCreationOptions {
   reviewText: string;
+  reviewRating?: number; // Add review rating for conditional CTA/escalation
   customPrompt?: string;
-  tone?: string;
-  maxLength?: number;
   userPreferences?: Record<string, unknown>;
 }
 
@@ -20,14 +19,13 @@ export async function createJobWithBusinessProfile(
   options: JobCreationOptions,
   businessProfile?: Record<string, unknown>
 ): Promise<JobWithBusinessProfile> {
-  const { reviewText, customPrompt, tone, maxLength, userPreferences } = options;
+  const { reviewText, reviewRating, customPrompt, userPreferences } = options;
 
   const jobRequest: JobWithBusinessProfile = {
     job_type: JOB_TYPES.AI_GENERATION,
     payload: {
       review_text: reviewText,
-      tone: tone || 'professional',
-      max_length: maxLength || 150,
+      review_rating: reviewRating, // Include review rating in payload
       user_preferences: userPreferences || {},
       ...(businessProfile && { business_profile: businessProfile }),
       ...(customPrompt && { custom_prompt: customPrompt })
@@ -118,21 +116,21 @@ export async function fetchCustomPrompt(accessToken: string, rating: number): Pr
     
     if (rating <= 2) {
       // For 1-2 stars, look for negative review prompt
-      const negativePrompt = promptData.prompts?.find((p: any) => 
+      const negativePrompt = promptData.prompts?.find((p: { content: string }) => 
         p.content.toLowerCase().includes('negative review') || p.content.toLowerCase().includes('bad review')
       );
       promptField = negativePrompt?.content || null;
       console.log('🔍 DEBUG: Using negative review prompt:', promptField ? 'Found' : 'Not found');
     } else if (rating === 3) {
       // For 3 stars, look for neutral review prompt
-      const neutralPrompt = promptData.prompts?.find((p: any) => 
+      const neutralPrompt = promptData.prompts?.find((p: { content: string }) => 
         p.content.toLowerCase().includes('neutral review') || p.content.toLowerCase().includes('3 star')
       );
       promptField = neutralPrompt?.content || null;
       console.log('🔍 DEBUG: Using neutral review prompt:', promptField ? 'Found' : 'Not found');
     } else {
       // For 4-5 stars, look for positive review prompt
-      const positivePrompt = promptData.prompts?.find((p: any) => 
+      const positivePrompt = promptData.prompts?.find((p: { content: string }) => 
         p.content.toLowerCase().includes('positive review') || p.content.toLowerCase().includes('good review')
       );
       promptField = positivePrompt?.content || null;
@@ -155,8 +153,6 @@ export async function createAIGenerationJob(
   accessToken: string,
   options: {
     customPrompt?: string;
-    tone?: string;
-    maxLength?: number;
     userPreferences?: Record<string, unknown>;
   } = {}
 ): Promise<Response> {
@@ -197,6 +193,7 @@ export async function createAIGenerationJob(
     const jobRequest = await createJobWithBusinessProfile(
       {
         reviewText,
+        reviewRating: rating, // Pass the review rating for conditional CTA/escalation
         ...options,
         customPrompt
       },

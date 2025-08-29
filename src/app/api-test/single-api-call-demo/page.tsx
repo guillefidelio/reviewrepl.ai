@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,8 +21,6 @@ interface JobResponse {
       review_rating: number;
       mode: 'simple' | 'pro';
       reviewer_name?: string;
-      tone: string;
-      max_length: number;
       business_profile?: Record<string, unknown>;
     };
   };
@@ -33,8 +31,6 @@ interface PayloadPreview {
   review_rating: number;
   mode: 'simple' | 'pro';
   reviewer_name?: string;
-  tone: string;
-  max_length: number;
 }
 
 interface JobResults {
@@ -55,8 +51,6 @@ export default function SingleApiCallDemoPage() {
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewerName, setReviewerName] = useState('');
   const [mode, setMode] = useState<'simple' | 'pro'>('simple');
-  const [tone, setTone] = useState('professional');
-  const [maxLength, setMaxLength] = useState(150);
   const [isLoading, setIsLoading] = useState(false);
   const [jobResponse, setJobResponse] = useState<JobResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -97,8 +91,6 @@ export default function SingleApiCallDemoPage() {
 
     try {
       const response = await createAIGenerationJob(reviewText, session.access_token, {
-        tone,
-        maxLength: parseInt(maxLength.toString()),
         userPreferences: {
           mode,
           reviewerName: reviewerName.trim() || undefined,
@@ -228,8 +220,6 @@ export default function SingleApiCallDemoPage() {
       review_text: reviewText || '[Review text will go here]',
       review_rating: reviewRating,
       mode: mode,
-      tone: tone,
-      max_length: maxLength
     };
 
     if (reviewerName.trim()) {
@@ -256,7 +246,7 @@ export default function SingleApiCallDemoPage() {
       <div className="text-center">
         <h1 className="text-3xl font-bold text-card-foreground">Mode-Based Prompt Selection Demo</h1>
         <p className="text-muted-foreground">
-          Test both modes: Simple (business profile optimized) and Pro (rating-based custom prompts from prompts table)
+          Test both modes: Simple (business profile optimized with automatic tone/length) and Pro (rating-based custom prompts)
         </p>
       </div>
 
@@ -266,7 +256,7 @@ export default function SingleApiCallDemoPage() {
           <CardHeader>
             <CardTitle>Job Creation Input</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Choose your mode and the server will automatically handle the rest!
+              Choose your mode and the server will automatically handle tone, length, and all business profile settings!
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -289,12 +279,12 @@ export default function SingleApiCallDemoPage() {
                   Pro Mode
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                {mode === 'simple' 
-                  ? 'Simple Mode: Uses business profile to generate optimized system prompts'
-                  : 'Pro Mode: Uses rating-based custom prompts from prompts table (edited in SAAS website)'
-                }
-              </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+              {mode === 'simple' 
+                ? 'Simple Mode: Uses business profile settings (tone, length, greetings, signatures, CTA) to generate optimized system prompts'
+                : 'Pro Mode: Uses rating-based custom prompts from prompts table (edited in SAAS website) with minimal business context'
+              }
+            </p>
             </div>
 
             {/* Review Text */}
@@ -357,38 +347,6 @@ export default function SingleApiCallDemoPage() {
               </p>
             </div>
 
-            {/* Tone and Length */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="tone-select" className="text-sm font-medium mb-2 block">Tone</label>
-                <select
-                  id="tone-select"
-                  value={tone}
-                  onChange={(e) => setTone(e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                  aria-label="Select response tone"
-                >
-                  <option value="professional">Professional</option>
-                  <option value="friendly">Friendly</option>
-                  <option value="casual">Casual</option>
-                  <option value="formal">Formal</option>
-                </select>
-              </div>
-              <div>
-                <label htmlFor="max-length-input" className="text-sm font-medium mb-2 block">Max Length</label>
-                <input
-                  id="max-length-input"
-                  type="number"
-                  value={maxLength}
-                  onChange={(e) => setMaxLength(parseInt(e.target.value))}
-                  className="w-full p-2 border rounded-md"
-                  min="50"
-                  max="500"
-                  aria-label="Maximum response length in characters"
-                />
-              </div>
-            </div>
-
             <Button 
               onClick={handleCreateJob} 
               disabled={!reviewText.trim() || isLoading}
@@ -418,10 +376,11 @@ export default function SingleApiCallDemoPage() {
               <ul className="list-disc list-inside mt-2 space-y-1">
                 <li>✅ Single API call instead of two</li>
                 <li>✅ Mode-based prompt selection</li>
-                <li>✅ Simple Mode: Business profile optimized prompts</li>
-                <li>✅ Pro Mode: Rating-based custom prompts from prompts table</li>
+                <li>✅ Simple Mode: Business profile optimized prompts (tone, length, greetings, signatures, CTA)</li>
+                <li>✅ Pro Mode: Rating-based custom prompts from prompts table with minimal business context</li>
                 <li>✅ Personal addressing with customer names</li>
                 <li>✅ Server automatically handles everything</li>
+                <li>✅ No more redundant tone/length settings - uses business profile as single source of truth</li>
               </ul>
             </div>
           </CardContent>

@@ -51,16 +51,25 @@ interface ProcessingResult {
   processingTimeMs: number;
 }
 
-// OpenAI API response interface
+// OpenAI API response interface for the new Responses API
 interface OpenAIResponse {
-  choices: Array<{
-    message: {
-      content: string;
-    };
+  output: Array<{
+    type: string;
+    id: string;
+    status: string;
+    role: string;
+    content: Array<{
+      type: string;
+      text: string;
+      annotations?: Array<unknown>;
+    }>;
   }>;
+  output_text?: string; // Safe convenience property for all text outputs
   usage?: {
     total_tokens: number;
   };
+  status?: string; // Response status
+  error?: string | null; // Error if any
 }
 
 // Main worker class
@@ -225,65 +234,177 @@ class JobProcessorWorker {
 
   // Process AI generation job
   private async processAIGeneration(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
-    const { review_text, tone = 'professional', max_length = 150, business_profile, custom_prompt } = payload;
+    const { review_text, business_profile, custom_prompt, review_rating } = payload;
 
     if (!review_text || typeof review_text !== 'string') {
       throw new Error('review_text is required and must be a string');
     }
 
-    // Ensure max_length is a number
-    const maxLength = typeof max_length === 'number' ? max_length : 150;
+    // Note: tone and length are now handled by business profile settings
 
     console.log(`🤖 Generating AI response for review: "${review_text.substring(0, 50)}..."`);
+    console.log(`⭐ Review Rating: ${review_rating || 'NOT SET'}`);
+    
+    // Determine review sentiment for logging
+    let reviewSentiment = 'Unknown';
+    if (review_rating && typeof review_rating === 'number') {
+      if (review_rating >= 4) reviewSentiment = 'Positive (4-5 stars)';
+      else if (review_rating === 3) reviewSentiment = 'Neutral (3 stars)';
+      else if (review_rating <= 2) reviewSentiment = 'Negative (1-2 stars)';
+    }
+    console.log(`📊 Review Sentiment: ${reviewSentiment}`);
 
     // Generate the appropriate system prompt
     let systemPrompt: string;
     
     if (custom_prompt && typeof custom_prompt === 'string' && custom_prompt.trim().length > 0) {
-      // For Pro mode with custom prompt, use the custom prompt as the primary instruction
-      systemPrompt = getSystemPromptForJob(
-        {}, // Empty business profile for Pro mode
-        'ai_generation',
-        custom_prompt
-      );
+      // For Pro mode with custom prompt, still include business profile context
+      if (business_profile && typeof business_profile === 'object') {
+        systemPrompt = getSystemPromptForJob(
+          business_profile as Record<string, unknown>,
+          'ai_generation',
+          custom_prompt,
+          review_rating as number
+        );
+      } else {
+        // Fallback for Pro mode without business profile
+        systemPrompt = getSystemPromptForJob(
+          {},
+          'ai_generation',
+          custom_prompt,
+          review_rating as number
+        );
+      }
     } else if (business_profile && typeof business_profile === 'object') {
       // Use business profile to generate contextual system prompt for Simple mode
       systemPrompt = getSystemPromptForJob(
         business_profile as Record<string, unknown>,
-        'ai_generation'
+        'ai_generation',
+        undefined, // no custom prompt
+        review_rating as number
       );
     } else {
-      // Fallback to basic prompt
-      systemPrompt = `You are a professional business response generator. Create a ${tone} response to customer reviews. Keep responses under ${maxLength} characters. Be helpful, professional, and address the customer's feedback appropriately.`;
+      // Fallback to basic prompt when no business profile or custom prompt is available
+      systemPrompt = `You are a professional business response generator. Create a professional response to customer reviews. Be helpful, professional, and address the customer's feedback appropriately.`;
     }
 
     console.log(`📝 Using system prompt: ${systemPrompt.substring(0, 100)}...`);
-
-    // Call OpenAI API with the generated system prompt
-    const response = await this.callOpenAI({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: systemPrompt
-        },
-        {
-          role: 'user',
-          content: `Generate a response to this customer review: "${review_text}"`
+    
+    // Debug: Log business profile parameters being used
+    if (business_profile && typeof business_profile === 'object') {
+      const bp = business_profile as Record<string, unknown>;
+      const isProMode = custom_prompt && typeof custom_prompt === 'string' && custom_prompt.trim().length > 0;
+      
+      if (isProMode) {
+        console.log(`🏢 Pro Mode - Minimal Business Context:`);
+        console.log(`   Business Name: "${bp.business_name || 'NOT SET'}"`);
+        console.log(`   Main Category: "${bp.business_main_category || 'NOT SET'}"`);
+        console.log(`   Secondary Category: "${bp.business_secondary_category || 'NOT SET'}"`);
+        console.log(`   Main Products/Services: "${bp.main_products_services || 'NOT SET'}"`);
+        console.log(`   Brief Description: "${bp.brief_description || 'NOT SET'}"`);
+        console.log(`   Business Tags: "${Array.isArray(bp.business_tags) ? bp.business_tags.join(', ') : 'NOT SET'}"`);
+        console.log(`   Custom Prompt: "${custom_prompt.substring(0, 100)}..."`);
+      } else {
+        console.log(`🏢 Simple Mode - Full Business Profile:`);
+        console.log(`   Business Name: "${bp.business_name || 'NOT SET'}"`);
+        console.log(`   Main Category: "${bp.business_main_category || 'NOT SET'}"`);
+        console.log(`   Secondary Category: "${bp.business_secondary_category || 'NOT SET'}"`);
+        console.log(`   Business Tags: "${Array.isArray(bp.business_tags) ? bp.business_tags.join(', ') : 'NOT SET'}"`);
+        console.log(`   Main Products/Services: "${bp.main_products_services || 'NOT SET'}"`);
+        console.log(`   Brief Description: "${bp.brief_description || 'NOT SET'}"`);
+        console.log(`   Country: "${bp.country || 'NOT SET'}"`);
+        console.log(`   State/Province: "${bp.state_province || 'NOT SET'}"`);
+        console.log(`   Language: "${bp.language || 'NOT SET'}"`);
+        console.log(`   Response Tone: "${bp.response_tone || 'NOT SET'}"`);
+        console.log(`   Response Length: "${bp.response_length || 'NOT SET'}"`);
+        console.log(`   Greetings: "${bp.greetings || 'NOT SET'}"`);
+        console.log(`   Signatures: "${bp.signatures || 'NOT SET'}"`);
+        console.log(`   Brand Voice Notes: "${bp.brand_voice_notes || 'NOT SET'}"`);
+        console.log(`   Other Considerations: "${bp.other_considerations || 'NOT SET'}"`);
+        
+        // Show which CTA/escalation will be used based on review rating
+        if (review_rating && typeof review_rating === 'number') {
+          if (review_rating >= 4) {
+            console.log(`   🎯 Will use POSITIVE CTA: "${bp.positive_review_cta || 'NOT SET'}"`);
+            console.log(`   ❌ Will NOT use escalation procedure (positive review)`);
+          } else if (review_rating <= 3) {
+            console.log(`   ❌ Will NOT use positive CTA (negative/neutral review)`);
+            console.log(`   🎯 Will use ESCALATION: "${bp.negative_review_escalation || 'NOT SET'}"`);
+          }
+        } else {
+          console.log(`   ⚠️ Review rating unknown - will use fallback CTA/escalation logic`);
         }
-      ],
-      max_tokens: Math.floor(maxLength / 4), // Rough estimate
-      temperature: 0.7
+      }
+    }
+    
+    // Add reviewer name context for personalization
+    const userPrefs = payload.user_preferences as Record<string, unknown>;
+    if (userPrefs && userPrefs.reviewerName && typeof userPrefs.reviewerName === 'string') {
+      const reviewerName = userPrefs.reviewerName.trim();
+      if (reviewerName) {
+        // Replace _firstName_ placeholder with actual reviewer name
+        systemPrompt = systemPrompt.replace(/_firstName_/g, reviewerName);
+        
+        // Also add explicit instruction about using the reviewer's name and being direct
+        systemPrompt += `\n\nIMPORTANT: The customer's name is "${reviewerName}". Use their actual name in your greeting and throughout the response to personalize it. Generate the response directly without extensive reasoning.`;
+        
+        console.log(`👤 Reviewer name found: "${reviewerName}"`);
+      }
+    } else {
+      console.log(`⚠️ No reviewer name found in payload`);
+    }
+
+    // Call OpenAI API with the new Responses API
+    const response = await this.callOpenAI({
+      model: 'gpt-5-nano',
+      input: `Generate a direct, personalized response to this customer review: "${review_text}". Focus on generating the actual response text rather than extensive reasoning.`,
+      instructions: systemPrompt,
+      max_output_tokens: 3000, // Use reasonable default since length is now handled by business profile
+      temperature: 1,
+      reasoning: { effort: "low" }, // Minimize reasoning tokens to save costs and focus on output
+      text: {
+        format: { type: "text" },
+        verbosity: "low" // Reduce verbosity to focus on response generation
+      }
     });
 
+    // Debug: Log the entire response to see structure
+    console.log('🔍 OpenAI Response Structure:', JSON.stringify(response, null, 2));
+    console.log('🔍 Response status:', response.status);
+    console.log('🔍 Response error:', response.error);
+    console.log('🔍 Output text:', response.output_text);
+
+    // Use the safe output_text property with fallback
+    let generatedContent = response.output_text;
+    
+    // Fallback: if output_text is not available, aggregate manually
+    if (!generatedContent || generatedContent.trim().length === 0) {
+      try {
+        generatedContent = response.output
+          ?.filter(item => item && item.content && Array.isArray(item.content))
+          ?.flatMap(item => item.content)
+          ?.filter(c => c && c.type === "output_text" && c.text)
+          ?.map(c => c.text)
+          .join(" ")
+          .trim();
+      } catch (fallbackError) {
+        console.error('❌ Fallback content extraction failed:', fallbackError);
+        console.log('🔍 Response structure for debugging:', JSON.stringify(response, null, 2));
+      }
+    }
+
+    if (!generatedContent || generatedContent.trim().length === 0) {
+      throw new Error('No content generated by OpenAI API');
+    }
+
     return {
-      generated_response: response.choices[0].message.content,
+      generated_response: generatedContent,
       confidence_score: 0.95,
       processing_time_ms: Date.now(),
       tokens_used: response.usage?.total_tokens || 0,
-      model_used: 'gpt-4o-mini',
-      tone_used: tone,
-      max_length_requested: maxLength,
+      model_used: 'gpt-5-nano',
+      tone_used: 'From Business Profile', // Tone now comes from business profile
+      max_length_requested: 'From Business Profile', // Length now comes from business profile
       system_prompt_used: systemPrompt // Store the system prompt used
     };
   }
@@ -298,27 +419,43 @@ class JobProcessorWorker {
 
     console.log(`📊 Processing review for business category: ${business_category}`);
 
-    // Call OpenAI API for review analysis
+    // Call OpenAI API for review analysis using new Responses API
     const response = await this.callOpenAI({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `Analyze this customer review and provide insights. Business category: ${business_category}`
-        },
-        {
-          role: 'user',
-          content: `Analyze this review: "${review_text}"`
-        }
-      ],
-      max_tokens: 200,
-      temperature: 0.3
+      model: 'gpt-5-nano',
+      input: `Analyze this review: "${review_text}"`,
+      instructions: `Analyze this customer review and provide insights. Business category: ${business_category}`,
+      max_output_tokens: 200,
+      temperature: 1,
+      reasoning: { effort: "low" } // Minimize reasoning tokens
     });
+
+    // Use the safe output_text property with fallback
+    let suggestedResponse = response.output_text;
+    
+    // Fallback: if output_text is not available, aggregate manually
+    if (!suggestedResponse || suggestedResponse.trim().length === 0) {
+      try {
+        suggestedResponse = response.output
+          ?.filter(item => item && item.content && Array.isArray(item.content))
+          ?.flatMap(item => item.content)
+          ?.filter(c => c && c.type === "output_text" && c.text)
+          ?.map(c => c.text)
+          .join(" ")
+          .trim();
+      } catch (fallbackError) {
+        console.error('❌ Fallback content extraction failed:', fallbackError);
+        console.log('🔍 Response structure for debugging:', JSON.stringify(response, null, 2));
+      }
+    }
+
+    if (!suggestedResponse || suggestedResponse.trim().length === 0) {
+      throw new Error('No content generated for review analysis');
+    }
 
     return {
       sentiment: 'positive', // This would be determined by AI analysis
       key_topics: ['service quality', 'customer satisfaction'],
-      suggested_response: response.choices[0].message.content,
+      suggested_response: suggestedResponse,
       response_rating: 4.5,
       business_category,
       analysis_timestamp: new Date().toISOString()
@@ -335,26 +472,42 @@ class JobProcessorWorker {
 
     console.log(`🔍 Analyzing prompt for optimization: ${optimization_goals}`);
 
-    // Call OpenAI API for prompt optimization
+    // Call OpenAI API for prompt optimization using new Responses API
     const response = await this.callOpenAI({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `Optimize this prompt for ${optimization_goals}. Provide specific improvements and an optimized version.`
-        },
-        {
-          role: 'user',
-          content: `Optimize this prompt: "${prompt_text}"`
-        }
-      ],
-      max_tokens: 300,
-      temperature: 0.4
+      model: 'gpt-5-nano',
+      input: `Optimize this prompt: "${prompt_text}"`,
+      instructions: `Optimize this prompt for ${optimization_goals}. Provide specific improvements and an optimized version.`,
+      max_output_tokens: 300,
+      temperature: 1,
+      reasoning: { effort: "low" } // Minimize reasoning tokens
     });
+
+    // Use the safe output_text property with fallback
+    let optimizedPrompt = response.output_text;
+    
+    // Fallback: if output_text is not available, aggregate manually
+    if (!optimizedPrompt || optimizedPrompt.trim().length === 0) {
+      try {
+        optimizedPrompt = response.output
+          ?.filter(item => item && item.content && Array.isArray(item.content))
+          ?.flatMap(item => item.content)
+          ?.filter(c => c && c.type === "output_text" && c.text)
+          ?.map(c => c.text)
+          .join(" ")
+          .trim();
+      } catch (fallbackError) {
+        console.error('❌ Fallback content extraction failed:', fallbackError);
+        console.log('🔍 Response structure for debugging:', JSON.stringify(response, null, 2));
+      }
+    }
+
+    if (!optimizedPrompt || optimizedPrompt.trim().length === 0) {
+      throw new Error('No content generated for prompt optimization');
+    }
 
     return {
       original_prompt: prompt_text,
-      optimized_prompt: response.choices[0].message.content,
+      optimized_prompt: optimizedPrompt,
       optimization_goals,
       improvements_suggested: ['clarity', 'specificity', 'context'],
       optimization_score: 8.5,
@@ -372,22 +525,38 @@ class JobProcessorWorker {
 
     console.log(`😊 Analyzing sentiment with depth: ${analysis_depth}`);
 
-    // Call OpenAI API for sentiment analysis
+    // Call OpenAI API for sentiment analysis using new Responses API
     const response = await this.callOpenAI({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: `Perform ${analysis_depth} sentiment analysis on this text. Provide sentiment score, key emotions, and insights.`
-        },
-        {
-          role: 'user',
-          content: `Analyze sentiment: "${text_content}"`
-        }
-      ],
-      max_tokens: 250,
-      temperature: 0.2
+      model: 'gpt-5-nano',
+      input: `Analyze sentiment: "${text_content}"`,
+      instructions: `Perform ${analysis_depth} sentiment analysis on this text. Provide sentiment score, key emotions, and insights.`,
+      max_output_tokens: 250,
+      temperature: 1,
+      reasoning: { effort: "low" } // Minimize reasoning tokens
     });
+
+    // Use the safe output_text property with fallback
+    let insights = response.output_text;
+    
+    // Fallback: if output_text is not available, aggregate manually
+    if (!insights || insights.trim().length === 0) {
+      try {
+        insights = response.output
+          ?.filter(item => item && item.content && Array.isArray(item.content))
+          ?.flatMap(item => item.content)
+          ?.filter(c => c && c.type === "output_text" && c.text)
+          .map(c => c.text)
+          .join(" ")
+          .trim();
+      } catch (fallbackError) {
+        console.error('❌ Fallback content extraction failed:', fallbackError);
+        console.log('🔍 Response structure for debugging:', JSON.stringify(response, null, 2));
+      }
+    }
+
+    if (!insights || insights.trim().length === 0) {
+      throw new Error('No content generated for sentiment analysis');
+    }
 
     return {
       text_analyzed: text_content.substring(0, 100) + '...',
@@ -395,15 +564,15 @@ class JobProcessorWorker {
       primary_emotion: 'satisfaction',
       secondary_emotions: ['appreciation', 'contentment'],
       analysis_depth,
-      insights: response.choices[0].message.content,
+      insights: insights,
       analysis_timestamp: new Date().toISOString()
     };
   }
 
-  // Call OpenAI API
+  // Call OpenAI API using the new Responses API
   private async callOpenAI(requestBody: Record<string, unknown>): Promise<OpenAIResponse> {
     try {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${OPENAI_API_KEY}`,

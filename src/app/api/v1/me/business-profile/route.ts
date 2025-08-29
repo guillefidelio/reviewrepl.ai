@@ -68,3 +68,4 @@ async function getBusinessProfileHandler(request: AuthenticatedRequest) {
 
 // Export the protected handler
 export const GET = withAuth(getBusinessProfileHandler);
+
