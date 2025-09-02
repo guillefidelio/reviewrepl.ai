@@ -33,8 +33,8 @@ const testSupabase = createClient(
 })();
 
 // Main imports
-import { Job, JobStatus } from '../lib/types/jobs';
-import { getSystemPromptForJob } from '../lib/utils/systemPromptGenerator';
+import { Job, JobStatus } from './lib/types/jobs';
+import { getSystemPromptForJob } from './lib/utils/systemPromptGenerator';
 
 // Configuration
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;

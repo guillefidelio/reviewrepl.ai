@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.JOB_TYPES = void 0;
+
 // Common job types
 exports.JOB_TYPES = {
     AI_GENERATION: 'ai_generation',
@@ -8,3 +8,6 @@ exports.JOB_TYPES = {
     PROMPT_ANALYSIS: 'prompt_analysis',
     SENTIMENT_ANALYSIS: 'sentiment_analysis',
 };
+
+// For simplicity, we'll define the basic types that the worker actually uses
+// The worker mainly uses JobStatus and Job interfaces

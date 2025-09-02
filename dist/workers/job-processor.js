@@ -29,7 +29,6 @@ const testSupabase = (0, supabase_js_1.createClient)(process.env.NEXT_PUBLIC_SUP
     }
 })();
 const systemPromptGenerator_1 = require("./lib/utils/systemPromptGenerator");
-const jobs_1 = require("./lib/types/jobs");
 // Configuration
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
