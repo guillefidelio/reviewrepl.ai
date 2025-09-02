@@ -508,13 +508,16 @@ class JobProcessorWorker {
     if (userPrefs && userPrefs.reviewerName && typeof userPrefs.reviewerName === 'string') {
       const reviewerName = userPrefs.reviewerName.trim();
       if (reviewerName) {
-        // Replace _firstName_ placeholder with actual reviewer name
-        systemPrompt = systemPrompt.replace(/_firstName_/g, reviewerName);
-        
-        // Also add explicit instruction about using the reviewer's name and being direct
-        systemPrompt += `\n\nIMPORTANT: The customer's name is "${reviewerName}". Use their actual name in your greeting and throughout the response to personalize it. Generate the response directly without extensive reasoning.`;
-        
-        console.log(`👤 Reviewer name found: "${reviewerName}"`);
+        // Extract first name only for proper personalization
+        const firstName = reviewerName.split(' ')[0];
+
+        // Replace _firstName_ placeholder with actual first name
+        systemPrompt = systemPrompt.replace(/_firstName_/g, firstName);
+
+        // Add explicit instruction about using the reviewer's FIRST name only
+        systemPrompt += `\n\nIMPORTANT: Use ONLY the customer's first name "${firstName}" in your greeting. Do NOT use their full name. Generate the response directly without extensive reasoning.`;
+
+        console.log(`👤 Reviewer name found: "${reviewerName}" (using first name: "${firstName}")`);
       }
     } else {
       console.log(`⚠️ No reviewer name found in payload`);
@@ -522,10 +525,10 @@ class JobProcessorWorker {
 
     // Call OpenAI API with the new Responses API
     const response = await this.callOpenAI({
-      model: 'gpt-5-nano',
-      input: `Generate a direct, personalized response to this customer review: "${review_text}". Focus on generating the actual response text rather than extensive reasoning.`,
+      model: 'gpt-5-mini',
+      input: `Review: "${review_text}"\nRating: ${review_rating || 'Not provided'}\nReviewer Name: ${userPrefs?.reviewerName || 'Not provided'}`,
       instructions: systemPrompt,
-      max_output_tokens: 3000, // Use reasonable default since length is now handled by business profile
+      max_output_tokens: 1000, // Use reasonable default since length is now handled by business profile
       temperature: 1,
       reasoning: { effort: "low" }, // Minimize reasoning tokens to save costs and focus on output
       text: {
@@ -553,7 +556,7 @@ class JobProcessorWorker {
       confidence_score: 0.95,
       processing_time_ms: Date.now(),
       tokens_used: response.usage?.total_tokens || 0,
-      model_used: 'gpt-5-nano',
+      model_used: 'gpt-5-mini',
       tone_used: 'From Business Profile', // Tone now comes from business profile
       max_length_requested: 'From Business Profile', // Length now comes from business profile
       system_prompt_used: systemPrompt // Store the system prompt used
@@ -572,7 +575,7 @@ class JobProcessorWorker {
 
     // Call OpenAI API for review analysis using new Responses API
     const response = await this.callOpenAI({
-      model: 'gpt-5-nano',
+      model: 'gpt-5-mini',
       input: `Analyze this review: "${review_text}"`,
       instructions: `Analyze this customer review and provide insights. Business category: ${business_category}`,
       max_output_tokens: 200,
@@ -609,7 +612,7 @@ class JobProcessorWorker {
 
     // Call OpenAI API for prompt optimization using new Responses API
     const response = await this.callOpenAI({
-      model: 'gpt-5-nano',
+      model: 'gpt-5-mini',
       input: `Optimize this prompt: "${prompt_text}"`,
       instructions: `Optimize this prompt for ${optimization_goals}. Provide specific improvements and an optimized version.`,
       max_output_tokens: 300,
@@ -646,7 +649,7 @@ class JobProcessorWorker {
 
     // Call OpenAI API for sentiment analysis using new Responses API
     const response = await this.callOpenAI({
-      model: 'gpt-5-nano',
+      model: 'gpt-5-mini',
       input: `Analyze sentiment: "${text_content}"`,
       instructions: `Perform ${analysis_depth} sentiment analysis on this text. Provide sentiment score, key emotions, and insights.`,
       max_output_tokens: 250,

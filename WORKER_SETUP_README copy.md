@@ -16,7 +16,7 @@ The background worker is a standalone Node.js process that:
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Next.js API   │    │  Background     │    │   OpenAI API    │
 │                 │    │    Worker       │    │                 │
-│ POST /api/jobs  │───▶│  (job-processor)│───▶│  gpt-5-nano  │
+│ POST /api/jobs  │───▶│  (job-processor)│───▶│  gpt-5-mini  │
 │                 │    │                 │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │

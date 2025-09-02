@@ -51,7 +51,7 @@ private async callOpenAI(requestBody: Record<string, unknown>): Promise<OpenAIRe
 #### AI Generation Job
 ```typescript
 const requestBody = {
-  model: 'gpt-5-nano',
+  model: 'gpt-5-mini',
   input: `Generate a response to this customer review: "The service was excellent!"`,
   instructions: `You are a professional business response generator. Create a professional response to customer reviews. Keep responses under 150 characters. Be helpful, professional, and address the customer's feedback appropriately.`,
   max_output_tokens: 37, // Math.floor(150 / 4)
@@ -62,7 +62,7 @@ const requestBody = {
 #### Review Processing Job
 ```typescript
 const requestBody = {
-  model: 'gpt-5-nano',
+  model: 'gpt-5-mini',
   input: `Analyze this review: "The food was amazing but the wait time was too long."`,
   instructions: `Analyze this customer review and provide insights. Business category: restaurant`,
   max_output_tokens: 200,
@@ -73,7 +73,7 @@ const requestBody = {
 #### Prompt Analysis Job
 ```typescript
 const requestBody = {
-  model: 'gpt-5-nano',
+  model: 'gpt-5-mini',
   input: `Optimize this prompt: "Write a response to a customer review."`,
   instructions: `Optimize this prompt for clarity. Provide specific improvements and an optimized version.`,
   max_output_tokens: 300,
@@ -84,7 +84,7 @@ const requestBody = {
 #### Sentiment Analysis Job
 ```typescript
 const requestBody = {
-  model: 'gpt-5-nano',
+  model: 'gpt-5-mini',
   input: `Analyze sentiment: "I love this product! It's exactly what I needed."`,
   instructions: `Perform basic sentiment analysis on this text. Provide sentiment score, key emotions, and insights.`,
   max_output_tokens: 250,
@@ -126,7 +126,7 @@ interface OpenAIResponse {
   "created_at": 1741476542,
   "status": "completed",
   "error": null,
-  "model": "gpt-5-nano",
+  "model": "gpt-5-mini",
   "output": [
     {
       "type": "message",
@@ -209,7 +209,7 @@ private async processAIGeneration(payload: Record<string, unknown>): Promise<Rec
 
   // Call OpenAI API with the new Responses API
   const response = await this.callOpenAI({
-    model: 'gpt-5-nano',
+    model: 'gpt-5-mini',
     input: `Generate a response to this customer review: "${review_text}"`,
     instructions: systemPrompt,
     max_output_tokens: Math.floor(maxLength / 4),
@@ -227,7 +227,7 @@ private async processAIGeneration(payload: Record<string, unknown>): Promise<Rec
     confidence_score: 0.95,
     processing_time_ms: Date.now(),
     tokens_used: response.usage?.total_tokens || 0,
-    model_used: 'gpt-5-nano',
+    model_used: 'gpt-5-mini',
     tone_used: tone,
     max_length_requested: maxLength,
     system_prompt_used: systemPrompt
@@ -296,7 +296,7 @@ max_output_tokens: Math.floor(maxLength / 4)
 
 ## 8. Model Configuration
 
-- **Model: gpt-5-nano** - Latest GPT-5 model optimized for efficiency
+- **Model: gpt-5-mini** - Latest GPT-5 model optimized for efficiency
 - **Capabilities**: Text generation, analysis, optimization
 - **Best For**: Business applications, customer service, content generation
 
@@ -321,7 +321,7 @@ curl https://api.openai.com/v1/responses \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer $OPENAI_API_KEY" \
   -d '{
-    "model": "gpt-5-nano",
+    "model": "gpt-5-mini",
     "input": "Generate a response to this customer review: \"Great service!\"",
     "instructions": "You are a professional business response generator. Create a professional response to customer reviews. Keep responses under 150 characters.",
     "max_output_tokens": 37,
