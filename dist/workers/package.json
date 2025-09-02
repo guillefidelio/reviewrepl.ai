@@ -1,0 +1,18 @@
+{
+  "name": "reviewrepl-worker",
+  "version": "1.0.0",
+  "description": "Background job processor for ReviewRepl.ai",
+  "main": "job-processor.js",
+  "scripts": {
+    "start": "node job-processor.js",
+    "dev": "ts-node src/workers/job-processor.ts"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.x.x",
+    "dotenv": "^16.x.x"
+  },
+  "devDependencies": {
+    "typescript": "^5.x.x",
+    "ts-node": "^10.x.x"
+  }
+}

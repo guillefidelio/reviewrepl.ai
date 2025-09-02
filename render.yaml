@@ -1,0 +1,23 @@
+services:
+  # Background Job Processor Service
+  - type: worker
+    name: reviewrepl-worker
+    env: node
+    buildCommand: npm run build
+    startCommand: npm start
+    sourceDir: src/workers
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false # Set this manually in Render dashboard
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false # Set this manually in Render dashboard
+      - key: OPENAI_API_KEY
+        sync: false # Set this manually in Render dashboard
+      - key: OPENAI_PROJECT_ID
+        sync: false # Set this manually in Render dashboard
+      - key: WORKER_POLLING_INTERVAL
+        value: 200
+      - key: WORKER_MAX_RETRIES
+        value: 3

@@ -1,0 +1,33 @@
+{
+  "name": "reviewrepl-worker",
+  "version": "1.0.0",
+  "description": "Background job processor for ReviewRepl.ai",
+  "main": "job-processor.js",
+  "scripts": {
+    "start": "node job-processor.js",
+    "dev": "ts-node -r tsconfig-paths/register -r dotenv/config src/workers/job-processor.ts",
+    "build": "tsc job-processor.ts --outDir . --target es2020 --module commonjs --esModuleInterop --allowSyntheticDefaultImports"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.56.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "background-worker",
+    "job-processor",
+    "supabase",
+    "openai",
+    "review-processing"
+  ],
+  "author": "ReviewRepl.ai",
+  "license": "ISC"
+}

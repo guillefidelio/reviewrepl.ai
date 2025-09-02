@@ -1,4 +1,25 @@
-import { BusinessProfile } from '@/lib/hooks/useSupabaseBusinessProfile';
+// BusinessProfile interface for worker context (copied from useSupabaseBusinessProfile)
+export interface BusinessProfile {
+  id: string;
+  user_id: string;
+  business_name: string;
+  business_main_category: string;
+  business_secondary_category: string;
+  business_tags: string[];
+  main_products_services: string;
+  brief_description: string;
+  country: string;
+  state_province: string;
+  language: string;
+  response_tone: string;
+  response_length: string;
+  greetings: string;
+  signatures: string;
+  positive_review_cta: string;
+  negative_review_escalation: string;
+  brand_voice_notes: string;
+  other_considerations: string;
+}
 
 export interface SystemPromptContext {
   businessProfile: BusinessProfile;
