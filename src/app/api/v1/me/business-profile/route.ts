@@ -9,6 +9,19 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 // Create Supabase client with service role key for server-side operations
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+// CORS headers for Chrome extension
+const corsHeaders = {
+  'Access-Control-Allow-Origin': 'chrome-extension://*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Max-Age': '86400',
+};
+
+// Handle OPTIONS request for CORS preflight
+export async function OPTIONS() {
+  return new NextResponse(null, { headers: corsHeaders });
+}
+
 async function getBusinessProfileHandler(request: AuthenticatedRequest) {
   try {
     // User is already authenticated at this point
@@ -31,7 +44,10 @@ async function getBusinessProfileHandler(request: AuthenticatedRequest) {
             error: 'Business profile not found',
             code: 'PROFILE_NOT_FOUND'
           },
-          { status: 404 }
+          { 
+            status: 404,
+            headers: corsHeaders
+          }
         );
       }
       
@@ -42,7 +58,10 @@ async function getBusinessProfileHandler(request: AuthenticatedRequest) {
           details: error.message,
           code: error.code
         },
-        { status: 500 }
+        { 
+          status: 500,
+          headers: corsHeaders
+        }
       );
     }
 
@@ -52,7 +71,7 @@ async function getBusinessProfileHandler(request: AuthenticatedRequest) {
     return NextResponse.json({
       success: true,
       business_profile: profile
-    });
+    }, { headers: corsHeaders });
 
   } catch (error) {
     console.error('API error in getBusinessProfileHandler:', error);
@@ -61,7 +80,10 @@ async function getBusinessProfileHandler(request: AuthenticatedRequest) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: corsHeaders
+      }
     );
   }
 }

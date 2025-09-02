@@ -9,8 +9,10 @@
     "start": "next start",
     "lint": "next lint",
     "worker:build": "node src/workers/build-worker.js",
-    "worker:start": "cd dist/workers && npm start",
-    "worker:dev": "ts-node -r tsconfig-paths/register -r dotenv/config src/workers/job-processor.ts"
+    "worker:start:prod": "cd dist/workers && npm start",
+    "worker:dev": "ts-node -r tsconfig-paths/register -r dotenv/config src/workers/job-processor.ts",
+    "worker:start": "node start-worker.js",
+    "worker:test-env": "node test-worker-env.js"
   },
   "dependencies": {
     "@radix-ui/react-label": "^2.1.7",

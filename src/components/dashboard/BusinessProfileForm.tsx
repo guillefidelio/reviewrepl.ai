@@ -15,11 +15,11 @@ interface BusinessProfileFormData {
   briefDescription: string;
   country: string;
   stateProvince: string;
-  language: string;
-  responseTone: string;
+  language: 'English' | 'Spanish' | 'French' | 'German' | 'Italian' | 'Portuguese' | 'Other';
+  responseTone: 'Professional' | 'Friendly' | 'Casual' | 'Formal';
   
   // Useful Secondary Parameters
-  responseLength: string;
+  responseLength: 'Brief' | 'Standard' | 'Detailed';
   greetings: string;
   signatures: string;
   positiveReviewCTA: string;
@@ -42,7 +42,7 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
   const [formData, setFormData] = useState<BusinessProfileFormData>({
     // Essential Parameters
     businessName: '',
-    businessMainCategory: 'Restaurant',
+    businessMainCategory: '',
     businessSecondaryCategory: '',
     businessTags: [],
     mainProductsServices: '',
@@ -74,16 +74,16 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
     if (businessProfile) {
       setFormData({
         businessName: businessProfile.business_name || '',
-        businessMainCategory: businessProfile.business_main_category || 'Restaurant',
+        businessMainCategory: businessProfile.business_main_category || '',
         businessSecondaryCategory: businessProfile.business_secondary_category || '',
         businessTags: businessProfile.business_tags || [],
         mainProductsServices: businessProfile.main_products_services || '',
         briefDescription: businessProfile.brief_description || '',
         country: businessProfile.country || '',
         stateProvince: businessProfile.state_province || '',
-        language: businessProfile.language || 'English',
-        responseTone: businessProfile.response_tone || 'Professional',
-        responseLength: businessProfile.response_length || 'Standard',
+        language: (businessProfile.language as BusinessProfileFormData['language']) || 'English',
+        responseTone: (businessProfile.response_tone as BusinessProfileFormData['responseTone']) || 'Professional',
+        responseLength: (businessProfile.response_length as BusinessProfileFormData['responseLength']) || 'Standard',
         greetings: businessProfile.greetings || '',
         signatures: businessProfile.signatures || '',
         positiveReviewCTA: businessProfile.positive_review_cta || '',
@@ -100,6 +100,10 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
 
     if (!formData.businessName.trim()) {
       newErrors.businessName = 'Business name is required';
+    }
+
+    if (!formData.businessMainCategory.trim()) {
+      newErrors.businessMainCategory = 'Business main category is required';
     }
 
     if (!formData.mainProductsServices.trim()) {
@@ -236,15 +240,20 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
               <label htmlFor="businessMainCategory" className="block text-sm font-medium text-gray-700">
                 Business Main Category *
               </label>
-              <input
+                            <input
                 id="businessMainCategory"
                 type="text"
                 required
                 value={formData.businessMainCategory}
                 onChange={(e) => handleInputChange('businessMainCategory', e.target.value)}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="e.g., Restaurant, Retail Store, Medical/Healthcare"
+                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.businessMainCategory ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="e.g., Restaurant, Retail Store, Medical/Healthcare, Auto Service, Beauty/Salon, Professional Services, Hotel/Lodging, etc."
               />
+              {errors.businessMainCategory && (
+                <p className="mt-1 text-sm text-red-600">{errors.businessMainCategory}</p>
+              )}
             </div>
 
             {/* Business Secondary Category */}
@@ -271,7 +280,7 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
                 id="language"
                 required
                 value={formData.language}
-                onChange={(e) => handleInputChange('language', e.target.value)}
+                onChange={(e) => handleInputChange('language', e.target.value as BusinessProfileFormData['language'])}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="English">English</option>
@@ -335,7 +344,7 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
                 id="responseTone"
                 required
                 value={formData.responseTone}
-                onChange={(e) => handleInputChange('responseTone', e.target.value)}
+                onChange={(e) => handleInputChange('responseTone', e.target.value as BusinessProfileFormData['responseTone'])}
                 className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               >
                 <option value="Professional">Professional</option>
@@ -438,7 +447,7 @@ export function BusinessProfileForm({ businessProfile, onCancel, onSuccess }: Bu
                   <button
                     key={length}
                     type="button"
-                    onClick={() => handleInputChange('responseLength', length)}
+                                         onClick={() => handleInputChange('responseLength', length as BusinessProfileFormData['responseLength'])}
                     className={`px-4 py-2 text-sm font-medium transition-all duration-200 ${
                       formData.responseLength === length
                         ? 'bg-blue-600 text-white shadow-sm'

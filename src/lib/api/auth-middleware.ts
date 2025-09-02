@@ -77,17 +77,53 @@ export async function authenticateRequest(request: NextRequest): Promise<NextRes
   }
 }
 
-// Helper function to create a protected API handler
-export function withAuth(handler: (request: AuthenticatedRequest) => Promise<NextResponse>) {
+// Helper function to create a protected API handler for routes without params
+export function withAuth(
+  handler: (request: AuthenticatedRequest) => Promise<NextResponse>
+) {
   return async (request: NextRequest): Promise<NextResponse> => {
     const authResult = await authenticateRequest(request);
-    
+
     if (authResult instanceof NextResponse) {
       // Authentication failed, return the error response
       return authResult;
     }
-    
+
     // Authentication succeeded, call the handler with authenticated request
     return handler(authResult);
+  };
+}
+
+// Helper function to create a protected API handler for routes with optional params
+export function withAuthWithOptionalContext<T extends { params: Promise<{ [key: string]: string }> } | undefined = undefined>(
+  handler: (request: AuthenticatedRequest, context?: T) => Promise<NextResponse>
+) {
+  return async (request: NextRequest, context?: T): Promise<NextResponse> => {
+    const authResult = await authenticateRequest(request);
+
+    if (authResult instanceof NextResponse) {
+      // Authentication failed, return the error response
+      return authResult;
+    }
+
+    // Authentication succeeded, call the handler with authenticated request and context
+    return handler(authResult, context);
+  };
+}
+
+// Specialized version for dynamic routes that require params
+export function withAuthForDynamicRoute(
+  handler: (request: AuthenticatedRequest, context: { params: Promise<{ id: string }> }) => Promise<NextResponse>
+) {
+  return async (request: NextRequest, context: { params: Promise<{ id: string }> }): Promise<NextResponse> => {
+    const authResult = await authenticateRequest(request);
+
+    if (authResult instanceof NextResponse) {
+      // Authentication failed, return the error response
+      return authResult;
+    }
+
+    // Authentication succeeded, call the handler with authenticated request and context
+    return handler(authResult, context);
   };
 }

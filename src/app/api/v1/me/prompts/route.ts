@@ -9,6 +9,19 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 // Create Supabase client with service role key for server-side operations
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+// CORS headers for Chrome extension
+const corsHeaders = {
+  'Access-Control-Allow-Origin': 'chrome-extension://*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Max-Age': '86400',
+};
+
+// Handle OPTIONS request for CORS preflight
+export async function OPTIONS() {
+  return new NextResponse(null, { headers: corsHeaders });
+}
+
 async function getPromptsHandler(request: AuthenticatedRequest) {
   try {
     // User is already authenticated at this point
@@ -51,7 +64,10 @@ async function getPromptsHandler(request: AuthenticatedRequest) {
           details: fetchError.message,
           code: fetchError.code
         },
-        { status: 500 }
+        { 
+          status: 500,
+          headers: corsHeaders
+        }
       );
     }
 
@@ -63,7 +79,7 @@ async function getPromptsHandler(request: AuthenticatedRequest) {
       prompts: prompts || [],
       user_id: user.id,
       total: prompts?.length || 0
-    });
+    }, { headers: corsHeaders });
 
   } catch (error) {
     console.error('API error in getPromptsHandler:', error);
@@ -72,7 +88,10 @@ async function getPromptsHandler(request: AuthenticatedRequest) {
         error: 'Internal server error',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: corsHeaders
+      }
     );
   }
 }

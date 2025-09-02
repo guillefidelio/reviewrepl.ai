@@ -160,7 +160,7 @@ export type Database = {
           id: string
           user_id: string
           business_name: string
-          business_main_category: 'Restaurant' | 'Retail Store' | 'Medical/Healthcare' | 'Auto Service' | 'Beauty/Salon' | 'Professional Services' | 'Hotel/Lodging'
+          business_main_category: string
           business_secondary_category: string | null
           business_tags: string[] | null
           main_products_services: string
@@ -183,7 +183,7 @@ export type Database = {
           id?: string
           user_id: string
           business_name: string
-          business_main_category: 'Restaurant' | 'Retail Store' | 'Medical/Healthcare' | 'Auto Service' | 'Beauty/Salon' | 'Professional Services' | 'Hotel/Lodging'
+          business_main_category: string
           business_secondary_category?: string | null
           business_tags?: string[] | null
           main_products_services: string
@@ -206,7 +206,7 @@ export type Database = {
           id?: string
           user_id?: string
           business_name?: string
-          business_main_category?: 'Restaurant' | 'Retail Store' | 'Medical/Healthcare' | 'Auto Service' | 'Beauty/Salon' | 'Professional Services' | 'Hotel/Lodging'
+          business_main_category?: string
           business_secondary_category?: string | null
           business_tags?: string[] | null
           main_products_services?: string
