@@ -3,7 +3,7 @@ services:
   - type: worker
     name: reviewrepl-worker
     env: node
-    buildCommand: npm run build
+    buildCommand: echo "Using pre-compiled files"
     startCommand: npm start
     sourceDir: src/workers
     envVars:

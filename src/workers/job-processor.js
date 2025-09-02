@@ -28,8 +28,62 @@ const testSupabase = (0, supabase_js_1.createClient)(process.env.NEXT_PUBLIC_SUP
         console.error("🔍 DEBUG: Database connection exception:", error);
     }
 })();
-const systemPromptGenerator_1 = require("./lib/utils/systemPromptGenerator");
-const jobs_1 = require("./lib/types/jobs");
+// Inline the necessary types and functions to avoid module dependencies
+const JOB_TYPES = {
+    AI_GENERATION: 'ai_generation',
+    REVIEW_PROCESSING: 'review_processing',
+    PROMPT_ANALYSIS: 'prompt_analysis',
+    SENTIMENT_ANALYSIS: 'sentiment_analysis',
+};
+
+// Simple system prompt generator inline
+function getSystemPromptForJob(businessProfile, jobType, customPrompt, reviewRating) {
+    if (customPrompt && customPrompt.trim().length > 0) {
+        if (businessProfile && businessProfile.business_name) {
+            return `You are a professional business representative responding to a customer review.
+
+Business Context:
+- Business Name: ${businessProfile.business_name}
+- Category: ${businessProfile.business_main_category}${businessProfile.business_secondary_category ? ` / ${businessProfile.business_secondary_category}` : ''}
+- Main Products/Services: ${businessProfile.main_products_services || 'Not specified'}
+- Brief Description: ${businessProfile.brief_description || 'Not specified'}
+- Business Tags: ${Array.isArray(businessProfile.business_tags) ? businessProfile.business_tags.join(', ') : 'Not specified'}
+
+Custom Instructions:
+${customPrompt}
+
+Follow the custom instructions while maintaining business context.`;
+        }
+        return `You are a professional business representative responding to a customer review.\n\n${customPrompt}`;
+    }
+
+    if (businessProfile && businessProfile.business_name) {
+        const ratingContext = reviewRating && typeof reviewRating === 'number' ?
+            (reviewRating >= 4 ? ' (positive review)' : reviewRating <= 3 ? ' (negative/neutral review)' : '') : '';
+
+        return `You are the official voice of ${businessProfile.business_name}, a ${businessProfile.business_main_category}${businessProfile.business_secondary_category ? `/${businessProfile.business_secondary_category}` : ''} in ${businessProfile.state_province || 'Unknown'}, ${businessProfile.country || 'Unknown'}.
+Reply to customer reviews in ${businessProfile.language || 'English'}.
+Tone: ${businessProfile.response_tone || 'professional'}.
+Follow our brand voice: ${businessProfile.brand_voice_notes || 'professional and authentic'}.
+Consider our context: ${businessProfile.brief_description || 'quality service provider'}.
+We mostly sell${businessProfile.main_products_services || 'various products/services'}, tags: ${Array.isArray(businessProfile.business_tags) ? businessProfile.business_tags.join(', ') : 'customer service'}.
+Other considerations: ${businessProfile.other_considerations || 'customer satisfaction'}.${businessProfile.greetings ? ` Use one of the greetings provided: ${businessProfile.greetings}` : ''}${businessProfile.signatures ? ` and one of the sign-offs provided: ${businessProfile.signatures}` : ''}.
+
+Structure:
+Greeting: Professional greeting in ${businessProfile.language || 'English'}.
+Body: Acknowledge the review and provide a helpful response.
+Close: ${businessProfile.signatures || 'professional sign-off'}.
+
+Rating-based behavior${ratingContext}:
+If rating >= 4: Thank them warmly and invite them back.
+If rating <= 3: Offer an apology and solution.
+If rating is missing: Default to friendly response.
+
+Return only the final customer reply text.`;
+    }
+
+    return `You are a professional business response generator. Create a professional response to customer reviews. Be helpful, professional, and address the customer's feedback appropriately.`;
+}
 // Configuration
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -319,16 +373,16 @@ class JobProcessorWorker {
         if (custom_prompt && typeof custom_prompt === 'string' && custom_prompt.trim().length > 0) {
             // For Pro mode with custom prompt, still include business profile context
             if (business_profile && typeof business_profile === 'object') {
-                systemPrompt = (0, systemPromptGenerator_1.getSystemPromptForJob)(business_profile, 'ai_generation', custom_prompt, review_rating);
+                systemPrompt = getSystemPromptForJob(business_profile, 'ai_generation', custom_prompt, review_rating);
             }
             else {
                 // Fallback for Pro mode without business profile
-                systemPrompt = (0, systemPromptGenerator_1.getSystemPromptForJob)({}, 'ai_generation', custom_prompt, review_rating);
+                systemPrompt = getSystemPromptForJob({}, 'ai_generation', custom_prompt, review_rating);
             }
         }
         else if (business_profile && typeof business_profile === 'object') {
             // Use business profile to generate contextual system prompt for Simple mode
-            systemPrompt = (0, systemPromptGenerator_1.getSystemPromptForJob)(business_profile, 'ai_generation', undefined, // no custom prompt
+            systemPrompt = getSystemPromptForJob(business_profile, 'ai_generation', undefined, // no custom prompt
             review_rating);
         }
         else {
