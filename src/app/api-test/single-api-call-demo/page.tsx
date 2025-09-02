@@ -209,7 +209,7 @@ export default function SingleApiCallDemoPage() {
         console.error('Error polling for results:', err);
         // Don't stop polling on individual errors, just log them
       }
-    }, 2000); // Poll every 2 seconds
+    }, 200); // Poll every 2 seconds
     
     // Store the interval ID so we can clear it if needed
     return () => clearInterval(pollInterval);

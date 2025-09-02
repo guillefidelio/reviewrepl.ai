@@ -12,7 +12,27 @@ console.log("NEXT_PUBLIC_SUPABASE_URL (from env):", process.env.NEXT_PUBLIC_SUPA
 console.log("SUPABASE_SERVICE_ROLE_KEY (from env):", process.env.SUPABASE_SERVICE_ROLE_KEY ? "SET" : "NOT SET");
 console.log("─".repeat(60));
 
+// Test database connection immediately
+console.log("🔍 DEBUG: Testing database connection...");
 import { createClient } from '@supabase/supabase-js';
+const testSupabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+(async () => {
+  try {
+    const result = await testSupabase.from('jobs').select('count').limit(1);
+    console.log("🔍 DEBUG: Database connection test result:", result.error ? "FAILED" : "SUCCESS");
+    if (result.error) {
+      console.error("🔍 DEBUG: Database error:", result.error);
+    }
+  } catch (error) {
+    console.error("🔍 DEBUG: Database connection exception:", error);
+  }
+})();
+
+// Main imports
 import { Job, JobStatus } from '../lib/types/jobs';
 import { getSystemPromptForJob } from '../lib/utils/systemPromptGenerator';
 
@@ -21,7 +41,7 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
 const OPENAI_PROJECT_ID = process.env.OPENAI_PROJECT_ID!;
-const POLLING_INTERVAL = 1000; // 5 seconds
+const POLLING_INTERVAL = 200; 
 const MAX_RETRIES = 3;
 
 // Validate required environment variables
@@ -71,65 +91,41 @@ interface ProcessingResult {
   processingTimeMs: number;
 }
 
-// Helper function to extract response text from OpenAI API v2 response
+// Helper function to extract response text from OpenAI Chat Completions API response
 function extractResponseText(response: OpenAIResponse): string | null {
   try {
     console.log('🔍 ExtractResponseText Debug: Starting extraction...');
 
-    // First try the safe output_text property
-    if (response.output_text && response.output_text.trim().length > 0) {
-      console.log('🔍 ExtractResponseText: Found output_text property');
-      return response.output_text.trim();
+    // Check if we have valid choices
+    if (!response.choices || !Array.isArray(response.choices) || response.choices.length === 0) {
+      console.error('❌ ExtractResponseText: No choices found in response');
+      return null;
     }
 
-    console.log('🔍 ExtractResponseText: No output_text property, trying message extraction...');
-
-    // Fallback: extract from message output (not reasoning)
-    const messageOutput = response.output?.find(item =>
-      item && item.type === 'message' && item.content && Array.isArray(item.content)
-    );
-
-    console.log('🔍 ExtractResponseText: Message output found:', !!messageOutput);
-
-    if (messageOutput) {
-      console.log('🔍 ExtractResponseText: Message content:', messageOutput.content?.length);
-
-      const text = messageOutput.content
-        ?.filter(c => c && c.type === "output_text" && c.text)
-        ?.map(c => c.text)
-        .join(" ")
-        .trim();
-
-      console.log('🔍 ExtractResponseText: Filtered text content:', !!text);
-      console.log('🔍 ExtractResponseText: Text length:', text?.length || 0);
-
-      if (text && text.length > 0) {
-        console.log('🔍 ExtractResponseText: Returning extracted text');
-        return text;
-      }
+    // Get the first choice
+    const firstChoice = response.choices[0];
+    if (!firstChoice || !firstChoice.message) {
+      console.error('❌ ExtractResponseText: No message found in first choice');
+      return null;
     }
 
-    console.log('🔍 ExtractResponseText: Trying fallback extraction...');
-
-    // Additional fallback: try to extract from any output_text content
-    const fallbackText = response.output
-      ?.filter(item => item && item.content && Array.isArray(item.content))
-      ?.flatMap(item => item.content)
-      ?.filter(c => c && typeof c === 'object' && 'type' in c && 'text' in c && c.type === "output_text" && c.text)
-      ?.map(c => (c as { text: string }).text)
-      .join(" ")
-      .trim();
-
-    console.log('🔍 ExtractResponseText: Fallback text found:', !!fallbackText);
-    console.log('🔍 ExtractResponseText: Fallback text length:', fallbackText?.length || 0);
-
-    if (fallbackText && fallbackText.length > 0) {
-      console.log('🔍 ExtractResponseText: Returning fallback text');
-      return fallbackText;
+    // Extract content from the message
+    const content = firstChoice.message.content;
+    if (!content || typeof content !== 'string') {
+      console.error('❌ ExtractResponseText: No valid content found in message');
+      return null;
     }
 
-    console.error('❌ ExtractResponseText: Could not extract response text from OpenAI response');
-    return null;
+    const trimmedContent = content.trim();
+    console.log('🔍 ExtractResponseText: Extracted content length:', trimmedContent.length);
+
+    if (trimmedContent.length === 0) {
+      console.error('❌ ExtractResponseText: Extracted content is empty');
+      return null;
+    }
+
+    console.log('🔍 ExtractResponseText: Successfully extracted response text');
+    return trimmedContent;
 
   } catch (error) {
     console.error('❌ ExtractResponseText: Error extracting response text:', error);
@@ -137,67 +133,34 @@ function extractResponseText(response: OpenAIResponse): string | null {
   }
 }
 
-// OpenAI API response interface for the new Responses API
+// OpenAI API response interface for Chat Completions API
 interface OpenAIResponse {
-  output: Array<{
-    type: string;
-    id: string;
-    status?: string;
-    role?: string;
-    summary?: Array<unknown>;
-    content?: Array<{
-      type: string;
-      text: string;
-      annotations?: Array<unknown>;
-      logprobs?: Array<unknown>;
-    }>;
+  id: string;
+  object: string;
+  created: number;
+  model: string;
+  choices: Array<{
+    index: number;
+    message: {
+      role: string;
+      content: string;
+      tool_calls?: Array<unknown>;
+      function_call?: unknown;
+    };
+    finish_reason: string | null;
+    logprobs?: {
+      tokens?: Array<string>;
+      token_logprobs?: Array<number>;
+      top_logprobs?: Array<Record<string, number>>;
+      text_offset?: Array<number>;
+    };
   }>;
-  output_text?: string; // Safe convenience property for all text outputs
-  usage?: {
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
     total_tokens: number;
-    input_tokens?: number;
-    output_tokens?: number;
-    input_tokens_details?: {
-      cached_tokens?: number;
-    };
-    output_tokens_details?: {
-      reasoning_tokens?: number;
-    };
   };
-  status?: string; // Response status
-  error?: string | null; // Error if any
-  id?: string;
-  object?: string;
-  created_at?: number;
-  background?: boolean;
-  incomplete_details?: unknown | null;
-  instructions?: string;
-  max_output_tokens?: number;
-  model?: string;
-  parallel_tool_calls?: boolean;
-  previous_response_id?: unknown | null;
-  prompt_cache_key?: unknown | null;
-  reasoning?: {
-    effort?: string;
-    summary?: unknown | null;
-  };
-  safety_identifier?: unknown | null;
-  service_tier?: string;
-  store?: boolean;
-  temperature?: number;
-  text?: {
-    format?: {
-      type?: string;
-    };
-    verbosity?: string;
-  };
-  tool_choice?: string;
-  tools?: Array<unknown>;
-  top_logprobs?: number;
-  top_p?: number;
-  truncation?: string;
-  user?: unknown | null;
-  metadata?: Record<string, unknown>;
+  system_fingerprint?: string;
 }
 
 // Main worker class
@@ -275,9 +238,27 @@ class JobProcessorWorker {
   // Process the next available job
   private async processNextJob(): Promise<void> {
     try {
+      // First, let's debug what's in the database
+      console.log('🔍 Debug: Checking for pending jobs in database...');
+      const { data: allJobs, error: debugError } = await supabase
+        .from('jobs')
+        .select('*')
+        .limit(5);
+
+      if (debugError) {
+        console.error('❌ Debug error:', debugError);
+      } else {
+        console.log(`🔍 Debug: Found ${allJobs?.length || 0} total jobs in database`);
+        if (allJobs && allJobs.length > 0) {
+          allJobs.forEach(job => {
+            console.log(`🔍 Debug: Job ${job.id} - Status: ${job.status}, Type: ${job.job_type}, Created: ${job.created_at}`);
+          });
+        }
+      }
+
       // Atomically fetch and lock a pending job
       const job = await this.fetchAndLockJob();
-      
+
       if (!job) {
         console.log('⏳ No pending jobs found, waiting...');
         return;
@@ -355,9 +336,10 @@ class JobProcessorWorker {
   // Process a specific job
   private async processJob(job: Job): Promise<ProcessingResult> {
     const startTime = Date.now();
-    
+
     try {
       console.log(`🔄 Processing job ${job.id} (${job.job_type})...`);
+      console.log(`🔍 Debug: Job payload keys: ${Object.keys(job.payload || {})}`);
 
       let result: Record<string, unknown>;
 
@@ -390,6 +372,9 @@ class JobProcessorWorker {
       const processingTime = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
+      console.error(`❌ Job ${job.id} failed with error:`, errorMessage);
+      console.error(`❌ Full error details:`, error);
+
       return {
         success: false,
         error: errorMessage,
@@ -400,9 +385,17 @@ class JobProcessorWorker {
 
   // Process AI generation job
   private async processAIGeneration(payload: Record<string, unknown>): Promise<Record<string, unknown>> {
+    console.log(`🔍 Debug: Starting AI generation with payload keys: ${Object.keys(payload)}`);
+
     const { review_text, business_profile, custom_prompt, review_rating } = payload;
 
+    console.log(`🔍 Debug: review_text type: ${typeof review_text}, length: ${(review_text as string)?.length || 0}`);
+    console.log(`🔍 Debug: business_profile type: ${typeof business_profile}`);
+    console.log(`🔍 Debug: custom_prompt type: ${typeof custom_prompt}`);
+    console.log(`🔍 Debug: review_rating type: ${typeof review_rating}, value: ${review_rating}`);
+
     if (!review_text || typeof review_text !== 'string') {
+      console.error(`❌ Debug: Invalid review_text: ${review_text}`);
       throw new Error('review_text is required and must be a string');
     }
 
@@ -523,24 +516,24 @@ class JobProcessorWorker {
       console.log(`⚠️ No reviewer name found in payload`);
     }
 
-    // Call OpenAI API with the new Responses API
+    // Call OpenAI API with Chat Completions format
     const response = await this.callOpenAI({
-      model: 'gpt-5-mini',
-      input: `Review: "${review_text}"\nRating: ${review_rating || 'Not provided'}\nReviewer Name: ${userPrefs?.reviewerName || 'Not provided'}`,
-      instructions: systemPrompt,
-      max_output_tokens: 1000, // Use reasonable default since length is now handled by business profile
-      temperature: 1,
-      reasoning: { effort: "low" }, // Minimize reasoning tokens to save costs and focus on output
-      text: {
-        format: { type: "text" },
-        verbosity: "low" // Reduce verbosity to focus on response generation
-      }
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        {
+          role: 'user',
+          content: `Review: "${review_text}"\nRating: ${review_rating || 'Not provided'}\nReviewer Name: ${userPrefs?.reviewerName || 'Not provided'}`
+        }
+      ],
+      max_tokens: 1000, // Use reasonable default since length is now handled by business profile
+      temperature: 1
     });
 
-    // Debug: Log the entire response to see structure
-    console.log('🔍 OpenAI Response Structure:', JSON.stringify(response, null, 2));
-    console.log('🔍 Response status:', response.status);
-    console.log('🔍 Response error:', response.error);
+    // Debug: Log the response structure
+    console.log('🔍 OpenAI Response ID:', response.id);
+    console.log('🔍 Response Model:', response.model);
+    console.log('🔍 Response Choices Count:', response.choices?.length || 0);
 
     // Extract the generated content using the helper function
     const generatedContent = extractResponseText(response);
@@ -556,7 +549,9 @@ class JobProcessorWorker {
       confidence_score: 0.95,
       processing_time_ms: Date.now(),
       tokens_used: response.usage?.total_tokens || 0,
-      model_used: 'gpt-5-mini',
+      prompt_tokens: response.usage?.prompt_tokens || 0,
+      completion_tokens: response.usage?.completion_tokens || 0,
+      model_used: 'gpt-4o-mini',
       tone_used: 'From Business Profile', // Tone now comes from business profile
       max_length_requested: 'From Business Profile', // Length now comes from business profile
       system_prompt_used: systemPrompt // Store the system prompt used
@@ -573,14 +568,21 @@ class JobProcessorWorker {
 
     console.log(`📊 Processing review for business category: ${business_category}`);
 
-    // Call OpenAI API for review analysis using new Responses API
+    // Call OpenAI API for review analysis using Chat Completions API
     const response = await this.callOpenAI({
-      model: 'gpt-5-mini',
-      input: `Analyze this review: "${review_text}"`,
-      instructions: `Analyze this customer review and provide insights. Business category: ${business_category}`,
-      max_output_tokens: 200,
-      temperature: 1,
-      reasoning: { effort: "low" } // Minimize reasoning tokens
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `Analyze this customer review and provide insights. Business category: ${business_category}`
+        },
+        {
+          role: 'user',
+          content: `Analyze this review: "${review_text}"`
+        }
+      ],
+      max_tokens: 200,
+      temperature: 1
     });
 
         // Extract the suggested response using the helper function
@@ -610,14 +612,21 @@ class JobProcessorWorker {
 
     console.log(`🔍 Analyzing prompt for optimization: ${optimization_goals}`);
 
-    // Call OpenAI API for prompt optimization using new Responses API
+    // Call OpenAI API for prompt optimization using Chat Completions API
     const response = await this.callOpenAI({
-      model: 'gpt-5-mini',
-      input: `Optimize this prompt: "${prompt_text}"`,
-      instructions: `Optimize this prompt for ${optimization_goals}. Provide specific improvements and an optimized version.`,
-      max_output_tokens: 300,
-      temperature: 1,
-      reasoning: { effort: "low" } // Minimize reasoning tokens
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `Optimize this prompt for ${optimization_goals}. Provide specific improvements and an optimized version.`
+        },
+        {
+          role: 'user',
+          content: `Optimize this prompt: "${prompt_text}"`
+        }
+      ],
+      max_tokens: 300,
+      temperature: 1
     });
 
         // Extract the optimized prompt using the helper function
@@ -647,14 +656,21 @@ class JobProcessorWorker {
 
     console.log(`😊 Analyzing sentiment with depth: ${analysis_depth}`);
 
-    // Call OpenAI API for sentiment analysis using new Responses API
+    // Call OpenAI API for sentiment analysis using Chat Completions API
     const response = await this.callOpenAI({
-      model: 'gpt-5-mini',
-      input: `Analyze sentiment: "${text_content}"`,
-      instructions: `Perform ${analysis_depth} sentiment analysis on this text. Provide sentiment score, key emotions, and insights.`,
-      max_output_tokens: 250,
-      temperature: 1,
-      reasoning: { effort: "low" } // Minimize reasoning tokens
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `Perform ${analysis_depth} sentiment analysis on this text. Provide sentiment score, key emotions, and insights.`
+        },
+        {
+          role: 'user',
+          content: `Analyze sentiment: "${text_content}"`
+        }
+      ],
+      max_tokens: 250,
+      temperature: 1
     });
 
         // Extract the insights using the helper function
@@ -675,7 +691,7 @@ class JobProcessorWorker {
     };
   }
 
-  // Call OpenAI API using the new Responses API
+  // Call OpenAI API using Chat Completions API
   private async callOpenAI(requestBody: Record<string, unknown>): Promise<OpenAIResponse> {
     try {
       console.log('🔄 Calling OpenAI API...');
@@ -685,7 +701,7 @@ class JobProcessorWorker {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
-      const response = await fetch('https://api.openai.com/v1/responses', {
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${OPENAI_API_KEY}`,
