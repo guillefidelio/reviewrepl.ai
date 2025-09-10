@@ -78,7 +78,8 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
         console.log('Paddle Debug:', {
           clientToken: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ? 'SET' : 'NOT SET',
           env: process.env.NEXT_PUBLIC_PADDLE_ENV,
-          apiKey: process.env.PADDLE_API_KEY ? 'SET' : 'NOT SET'
+          apiKey: process.env.PADDLE_API_KEY ? 'SET' : 'NOT SET',
+          allEnvKeys: Object.keys(process.env).filter(key => key.includes('PADDLE'))
         });
 
         if (!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) {
