@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
-import { supabase } from '@/lib/supabase';
 import {
   getSubscriptions,
   getCustomerId,
@@ -26,7 +25,6 @@ import {
 type BillingCycle = 'month' | 'year';
 import type {
   SubscriptionWithMetadata,
-  CustomerWithSubscriptions,
   BillingSummary,
   SubscriptionStatus
 } from '@/lib/types/paddle';
@@ -65,7 +63,7 @@ export interface SubscriptionHookReturn extends SubscriptionState {
 
 export function usePaddleSubscription() {
   const { user } = useSupabaseAuth();
-  const { balance, updateCredits, fetchCredits } = useSupabaseCredits();
+  const { balance, updateCredits } = useSupabaseCredits();
 
   const [state, setState] = useState<SubscriptionState>({
     subscriptions: [],
@@ -136,6 +134,29 @@ export function usePaddleSubscription() {
   }, [user, updateCredits]);
 
   /**
+   * Updates billing summary based on subscription data
+   */
+  const updateBillingSummary = useCallback((
+    activeSubscription: SubscriptionWithMetadata | null
+  ) => {
+    if (!activeSubscription) {
+      setBillingSummary(null);
+      return;
+    }
+
+    const summary: BillingSummary = {
+      currentPlan: activeSubscription.tierName,
+      creditsRemaining: balance.available,
+      nextBillingDate: activeSubscription.nextBillingDate,
+      monthlySpend: 0, // This would need to be calculated from transaction history
+      currency: 'USD', // Default currency
+      isYearlyBilling: false // This would need to be determined from the price ID
+    };
+
+    setBillingSummary(summary);
+  }, [balance.available]);
+
+  /**
    * Fetches subscriptions and updates state
    */
   const fetchSubscriptions = useCallback(async () => {
@@ -168,7 +189,7 @@ export function usePaddleSubscription() {
       }
 
       // Update billing summary
-      updateBillingSummary(activeSubscription, enrichedSubscriptions);
+      updateBillingSummary(activeSubscription);
 
       setState({
         subscriptions: enrichedSubscriptions,
@@ -186,31 +207,7 @@ export function usePaddleSubscription() {
         error: error instanceof Error ? error.message : 'Failed to fetch subscriptions'
       }));
     }
-  }, [user, enrichSubscriptionData, allocateCreditsForSubscription]);
-
-  /**
-   * Updates billing summary based on subscription data
-   */
-  const updateBillingSummary = useCallback((
-    activeSubscription: SubscriptionWithMetadata | null,
-    allSubscriptions: SubscriptionWithMetadata[]
-  ) => {
-    if (!activeSubscription) {
-      setBillingSummary(null);
-      return;
-    }
-
-    const summary: BillingSummary = {
-      currentPlan: activeSubscription.tierName,
-      creditsRemaining: balance.available,
-      nextBillingDate: activeSubscription.nextBillingDate,
-      monthlySpend: 0, // This would need to be calculated from transaction history
-      currency: 'USD', // Default currency
-      isYearlyBilling: false // This would need to be determined from the price ID
-    };
-
-    setBillingSummary(summary);
-  }, [balance.available]);
+  }, [user, enrichSubscriptionData, allocateCreditsForSubscription, updateBillingSummary]);
 
   /**
    * Cancels a subscription
@@ -325,7 +322,8 @@ export function usePaddleSubscription() {
   /**
    * Gets transaction history
    */
-  const getTransactionHistory = useCallback(async (subscriptionId?: string): Promise<TransactionResponse | null> => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const getTransactionHistory = useCallback(async (_subscriptionId?: string): Promise<TransactionResponse | null> => {
     try {
       // This would need to be implemented in the subscription-manager
       // For now, return null

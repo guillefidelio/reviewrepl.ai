@@ -29,13 +29,6 @@ const testSupabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.
     }
 })();
 // Inline the necessary types and functions to avoid module dependencies
-const JOB_TYPES = {
-    AI_GENERATION: 'ai_generation',
-    REVIEW_PROCESSING: 'review_processing',
-    PROMPT_ANALYSIS: 'prompt_analysis',
-    SENTIMENT_ANALYSIS: 'sentiment_analysis',
-};
-
 // Simple system prompt generator inline
 function getSystemPromptForJob(businessProfile, jobType, customPrompt, reviewRating) {
     if (customPrompt && customPrompt.trim().length > 0) {

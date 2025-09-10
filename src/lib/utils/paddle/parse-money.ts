@@ -33,7 +33,8 @@ export function parseMoney(amount: string | number = '0', currency: string = 'US
 
   try {
     return formatMoney(parsedAmount, currency);
-  } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (_error) {
     console.warn(`Failed to format currency ${currency}, falling back to basic formatting`);
     return `${parsedAmount.toFixed(2)} ${currency}`;
   }
