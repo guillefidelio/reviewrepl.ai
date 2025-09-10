@@ -84,10 +84,8 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
           allEnvVars: Object.keys(process.env).sort()
         });
 
-        // For debugging - temporarily bypass the check
         if (!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) {
-          console.warn('Paddle client token not configured - bypassing for debugging');
-          // throw new Error('Paddle client token not configured');
+          throw new Error('Paddle client token not configured');
         }
 
         const paddleInstance = await initializePaddle({
