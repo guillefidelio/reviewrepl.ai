@@ -31,6 +31,7 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
   const [paddle, setPaddle] = useState<Paddle | undefined>();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Get tier information from price ID
   const tierId = getTierIdFromPriceId(priceId);
@@ -59,10 +60,20 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
     }
   }, [user, router]);
 
+  // Set mounted state
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // Initialize Paddle
   useEffect(() => {
     const initializeCheckout = async () => {
       try {
+        // Ensure we're in the browser, component is mounted, and have required environment variables
+        if (typeof window === 'undefined' || !isMounted) {
+          return;
+        }
+
         if (!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) {
           throw new Error('Paddle client token not configured');
         }
@@ -92,25 +103,62 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
         if (paddleInstance && priceId) {
           setPaddle(paddleInstance);
 
-          // Open checkout
-          paddleInstance.Checkout.open({
-            ...(userEmail && { customer: { email: userEmail } }),
-            items: [{ priceId: priceId, quantity: 1 }],
-          });
+          // Wait for DOM to be ready before opening checkout
+          const checkAndOpenCheckout = () => {
+            const checkoutFrame = document.getElementById('paddle-checkout-frame');
+            if (checkoutFrame) {
+              try {
+                // Open checkout
+                paddleInstance.Checkout.open({
+                  ...(userEmail && { customer: { email: userEmail } }),
+                  items: [{ priceId: priceId, quantity: 1 }],
+                });
+              } catch (checkoutError) {
+                console.error('Error opening Paddle checkout:', checkoutError);
+                setError('Failed to open checkout. Please refresh the page.');
+              }
+            } else {
+              console.error('Paddle checkout frame not found');
+              setError('Checkout container not ready. Please refresh the page.');
+            }
+          };
+
+          // Use requestAnimationFrame for better timing
+          if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+            window.requestAnimationFrame(() => {
+              setTimeout(checkAndOpenCheckout, 50);
+            });
+          } else {
+            setTimeout(checkAndOpenCheckout, 100);
+          }
         }
 
         setIsLoading(false);
       } catch (err) {
         console.error('Failed to initialize Paddle:', err);
-        setError('Failed to load checkout. Please refresh the page.');
+          setError('Failed to load checkout. Please refresh the page.');
         setIsLoading(false);
       }
     };
 
-    if (!paddle) {
+    if (!paddle && isMounted) {
       initializeCheckout();
     }
-  }, [paddle, priceId, userEmail, handleCheckoutEvents]);
+  }, [paddle, priceId, userEmail, handleCheckoutEvents, isMounted]);
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      // Cleanup any Paddle instances on unmount
+      if (paddle && typeof window !== 'undefined') {
+        try {
+          // Paddle cleanup if available
+        } catch (err) {
+          console.warn('Error during Paddle cleanup:', err);
+        }
+      }
+    };
+  }, [paddle]);
 
   if (isLoading) {
     return <CheckoutSkeleton />;
