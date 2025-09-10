@@ -75,12 +75,13 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
         }
 
         // Debug: Log environment variables (remove this after debugging)
-        console.log('Paddle Debug:', {
+        console.log('Paddle Debug - FINAL CHECK:', {
           clientToken: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ? 'SET' : 'NOT SET',
           env: process.env.NEXT_PUBLIC_PADDLE_ENV,
           apiKey: process.env.PADDLE_API_KEY ? 'SET' : 'NOT SET',
           allEnvKeys: Object.keys(process.env).filter(key => key.includes('PADDLE')),
-          actualApiKey: process.env.PADDLE_API_KEY || 'UNDEFINED'
+          actualApiKey: process.env.PADDLE_API_KEY || 'UNDEFINED',
+          allEnvVars: Object.keys(process.env).sort()
         });
 
         if (!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) {
