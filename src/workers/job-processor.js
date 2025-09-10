@@ -14,8 +14,8 @@ console.log("SUPABASE_SERVICE_ROLE_KEY (from env):", process.env.SUPABASE_SERVIC
 console.log("─".repeat(60));
 // Test database connection immediately
 console.log("🔍 DEBUG: Testing database connection...");
-const supabase_js_1 = require("@supabase/supabase-js");
-const testSupabase = (0, supabase_js_1.createClient)(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+import { createClient } from "@supabase/supabase-js";
+const testSupabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 (async () => {
     try {
         const result = await testSupabase.from('jobs').select('count').limit(1);

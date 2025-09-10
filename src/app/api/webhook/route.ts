@@ -48,10 +48,13 @@ export async function POST(request: NextRequest) {
 
     console.log(`Successfully processed webhook event: ${eventData.eventType}`);
 
+    // Extract event ID if available (not all event types have a top-level id property)
+    const eventId = 'id' in eventData ? (eventData as { id: string }).id : null;
+
     return Response.json({
       status: 200,
       eventType: eventData.eventType,
-      eventId: eventData.id
+      eventId: eventId
     });
 
   } catch (error) {

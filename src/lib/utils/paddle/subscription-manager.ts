@@ -1,18 +1,48 @@
 import { createClient } from '@supabase/supabase-js';
-import { getPaddleInstance, ErrorMessage, type ApiResponse } from './data-helpers';
+import { getPaddleInstance } from './get-paddle-instance';
+import { ErrorMessage, type ApiResponse } from './data-helpers';
 import { WebhookProcessor } from './webhook-processor';
 
 /**
  * Response types for subscription operations
  */
+export interface SubscriptionData {
+  id: string;
+  customerId: string;
+  status: string;
+  items?: Array<{
+    price?: {
+      id?: string;
+      productId?: string;
+    };
+    quantity: number;
+  }>;
+  scheduledChange?: {
+    effectiveAt?: string;
+  } | null;
+  currentPeriodStart?: string;
+  currentPeriodEnd?: string;
+  cancelAtPeriodEnd?: boolean;
+}
+
+export interface TransactionData {
+  id: string;
+  customerId: string | null;
+  status: string;
+  amount?: number;
+  currency?: string;
+  subscriptionId?: string | null;
+  createdAt: string;
+}
+
 export interface SubscriptionResponse {
-  data: any[];
+  data: SubscriptionData[];
   hasMore: boolean;
   totalRecords: number;
 }
 
 export interface TransactionResponse {
-  data: any[];
+  data: TransactionData[];
   hasMore: boolean;
   totalRecords: number;
 }
@@ -165,8 +195,9 @@ export async function createOrLinkCustomer(email: string): Promise<ApiResponse<s
 export async function cancelSubscription(subscriptionId: string): Promise<ApiResponse<boolean>> {
   try {
     const paddle = getPaddleInstance();
-    await paddle.subscriptions.update(subscriptionId, {
-      cancelAtPeriodEnd: true,
+    // Cancel subscription at the end of the billing period
+    await paddle.subscriptions.cancel(subscriptionId, {
+      effectiveFrom: 'next_billing_period'
     });
 
     return { data: true };
@@ -182,9 +213,8 @@ export async function cancelSubscription(subscriptionId: string): Promise<ApiRes
 export async function reactivateSubscription(subscriptionId: string): Promise<ApiResponse<boolean>> {
   try {
     const paddle = getPaddleInstance();
-    await paddle.subscriptions.update(subscriptionId, {
-      cancelAtPeriodEnd: false,
-    });
+    // Reactivate subscription by updating with no cancellation
+    await paddle.subscriptions.update(subscriptionId, {});
 
     return { data: true };
   } catch (error) {

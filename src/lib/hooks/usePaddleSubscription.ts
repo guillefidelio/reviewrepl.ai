@@ -14,19 +14,23 @@ import {
   type TransactionResponse,
   type ApiResponse
 } from '@/lib/utils/paddle';
+import { isErrorResponse } from '@/lib/utils/paddle/data-helpers';
 import { useSupabaseCredits } from './useSupabaseCredits';
 import {
   PricingTiers,
   getTierIdFromPriceId,
-  getCreditsForTier,
-  type BillingCycle
+  getCreditsForTier
 } from '@/lib/constants/pricing-tiers';
+
+// Type for billing cycles
+type BillingCycle = 'month' | 'year';
 import type {
   SubscriptionWithMetadata,
   CustomerWithSubscriptions,
   BillingSummary,
   SubscriptionStatus
 } from '@/lib/types/paddle';
+import type { SubscriptionData } from '@/lib/utils/paddle/subscription-manager';
 
 export interface SubscriptionState {
   subscriptions: SubscriptionWithMetadata[];
@@ -76,19 +80,35 @@ export function usePaddleSubscription() {
   /**
    * Enriches subscription data with metadata from pricing tiers
    */
-  const enrichSubscriptionData = useCallback((subscription: any): SubscriptionWithMetadata => {
-    const tierId = subscription.price_id ? getTierIdFromPriceId(subscription.price_id) : null;
+  const enrichSubscriptionData = useCallback((subscription: SubscriptionData): SubscriptionWithMetadata => {
+    const priceId = subscription.items?.[0]?.price?.id;
+    const tierId = priceId ? getTierIdFromPriceId(priceId) : null;
     const tier = tierId ? PricingTiers.find(t => t.id === tierId) : null;
 
-    const currentPeriodEnd = subscription.current_period_end ? new Date(subscription.current_period_end) : null;
+    const currentPeriodEnd = subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd) : null;
     const now = new Date();
     const daysUntilRenewal = currentPeriodEnd ? Math.ceil((currentPeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
 
+    // Create a base object with snake_case fields matching SubscriptionData
+    const baseSubscription = {
+      subscription_id: subscription.id,
+      customer_id: subscription.customerId,
+      subscription_status: subscription.status as SubscriptionStatus,
+      price_id: priceId || null,
+      product_id: subscription.items?.[0]?.price?.productId || null,
+      scheduled_change: subscription.scheduledChange?.effectiveAt || null,
+      current_period_start: subscription.currentPeriodStart || null,
+      current_period_end: subscription.currentPeriodEnd || null,
+      cancel_at_period_end: subscription.cancelAtPeriodEnd || false,
+      created_at: new Date().toISOString(), // Not available in API response
+      updated_at: new Date().toISOString(), // Not available in API response
+    };
+
     return {
-      ...subscription,
+      ...baseSubscription,
       tierName: tier?.name || 'Unknown Plan',
       creditsAllocated: tier ? getCreditsForTier(tier.id, 'month') : 0, // Default to monthly credits
-      nextBillingDate: subscription.current_period_end || null,
+      nextBillingDate: subscription.currentPeriodEnd || null,
       daysUntilRenewal
     };
   }, []);
@@ -130,7 +150,7 @@ export function usePaddleSubscription() {
       // Get subscriptions
       const subscriptionResult: ApiResponse<SubscriptionResponse> = await getSubscriptions();
 
-      if (subscriptionResult.error) {
+      if (isErrorResponse(subscriptionResult)) {
         throw new Error(subscriptionResult.error);
       }
 
@@ -201,7 +221,7 @@ export function usePaddleSubscription() {
 
       const result: ApiResponse<boolean> = await cancelSubscription(subscriptionId);
 
-      if (result.error) {
+      if (isErrorResponse(result)) {
         throw new Error(result.error);
       }
 
@@ -225,7 +245,7 @@ export function usePaddleSubscription() {
 
       const result: ApiResponse<boolean> = await reactivateSubscription(subscriptionId);
 
-      if (result.error) {
+      if (isErrorResponse(result)) {
         throw new Error(result.error);
       }
 
@@ -263,7 +283,7 @@ export function usePaddleSubscription() {
 
       const result: ApiResponse<boolean> = await updateSubscriptionPrice(subscriptionId, newPriceId);
 
-      if (result.error) {
+      if (isErrorResponse(result)) {
         throw new Error(result.error);
       }
 
@@ -287,7 +307,7 @@ export function usePaddleSubscription() {
 
       const result: ApiResponse<string> = await createOrLinkCustomer(email);
 
-      if (result.error) {
+      if (isErrorResponse(result)) {
         throw new Error(result.error);
       }
 

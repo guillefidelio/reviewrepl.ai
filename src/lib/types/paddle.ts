@@ -96,7 +96,7 @@ export interface CheckoutSession {
 export interface WebhookEventData {
   id: string;
   eventType: string;
-  data: any;
+  data: Record<string, unknown>;
   occurredAt: string;
 }
 
@@ -178,7 +178,7 @@ export interface PaddleConfig {
 export interface CheckoutOptions {
   token: string;
   environment: PaddleEnvironment;
-  eventCallback?: (event: any) => void;
+  eventCallback?: (event: Record<string, unknown>) => void;
   checkout?: {
     settings?: {
       variant?: 'one-page' | 'multi-page';
@@ -249,6 +249,6 @@ export interface CreditAllocation {
  */
 export interface WebhookVerificationResult {
   isValid: boolean;
-  eventData?: any;
+  eventData?: Record<string, unknown>;
   error?: string;
 }

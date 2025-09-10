@@ -6,6 +6,7 @@ import {
   CustomerUpdatedEvent,
   SubscriptionCreatedEvent,
   SubscriptionUpdatedEvent,
+  SubscriptionCanceledEvent,
 } from '@paddle/paddle-node-sdk';
 
 /**
@@ -41,7 +42,7 @@ export class WebhookProcessor {
           break;
 
         case EventName.SubscriptionCanceled:
-          await this.handleSubscriptionCanceled(eventData as SubscriptionUpdatedEvent);
+          await this.handleSubscriptionCanceled(eventData as SubscriptionCanceledEvent);
           break;
 
         case EventName.TransactionCompleted:
@@ -83,9 +84,9 @@ export class WebhookProcessor {
         price_id: eventData.data.items?.[0]?.price?.id || null,
         product_id: eventData.data.items?.[0]?.price?.productId || null,
         scheduled_change: eventData.data.scheduledChange?.effectiveAt || null,
-        current_period_start: eventData.data.currentPeriodStart || null,
-        current_period_end: eventData.data.currentPeriodEnd || null,
-        cancel_at_period_end: eventData.data.cancelAtPeriodEnd || false,
+        current_period_start: (eventData.data as { currentPeriodStart?: string }).currentPeriodStart || null,
+        current_period_end: (eventData.data as { currentPeriodEnd?: string }).currentPeriodEnd || null,
+        cancel_at_period_end: (eventData.data as { cancelAtPeriodEnd?: boolean }).cancelAtPeriodEnd || false,
       }, {
         onConflict: 'subscription_id'
       });
@@ -114,7 +115,7 @@ export class WebhookProcessor {
         subscription_status: eventData.data.status,
         subscription_id: eventData.data.id,
         subscription_tier: this.getTierFromPriceId(eventData.data.items?.[0]?.price?.id),
-        subscription_renewal_date: eventData.data.currentPeriodEnd,
+        subscription_renewal_date: (eventData.data as { currentPeriodEnd?: string }).currentPeriodEnd,
         last_subscription_update: new Date().toISOString()
       })
       .eq('id', userId);
@@ -151,8 +152,8 @@ export class WebhookProcessor {
   /**
    * Handles subscription cancellation
    */
-  private async handleSubscriptionCanceled(eventData: SubscriptionUpdatedEvent): Promise<void> {
-    await this.updateSubscriptionData(eventData);
+  private async handleSubscriptionCanceled(eventData: SubscriptionCanceledEvent): Promise<void> {
+    await this.updateSubscriptionData(eventData as unknown as SubscriptionUpdatedEvent);
     console.log(`Subscription ${eventData.data.id} has been canceled`);
   }
 
