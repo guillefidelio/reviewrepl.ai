@@ -74,6 +74,13 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
           return;
         }
 
+        // Debug: Log environment variables (remove this after debugging)
+        console.log('Paddle Debug:', {
+          clientToken: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ? 'SET' : 'NOT SET',
+          env: process.env.NEXT_PUBLIC_PADDLE_ENV,
+          apiKey: process.env.PADDLE_API_KEY ? 'SET' : 'NOT SET'
+        });
+
         if (!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) {
           throw new Error('Paddle client token not configured');
         }
