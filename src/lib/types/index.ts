@@ -171,3 +171,6 @@ export interface PromptHookReturn extends PromptState {
   toggleEditMode: (promptId?: string) => void;
   clearError: () => void;
 }
+
+// Re-export Paddle types
+export type * from './paddle';

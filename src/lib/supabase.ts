@@ -24,6 +24,13 @@ export type Database = {
           answering_mode_selected: 'simple' | 'pro'
           answering_mode_last_updated: string
           answering_mode_is_active: boolean
+          paddle_customer_id: string | null
+          subscription_status: string | null
+          subscription_id: string | null
+          subscription_tier: string | null
+          credits_allocated_monthly: number | null
+          subscription_renewal_date: string | null
+          last_subscription_update: string | null
           created_at: string
           updated_at: string
         }
@@ -41,6 +48,13 @@ export type Database = {
           answering_mode_selected?: 'simple' | 'pro'
           answering_mode_last_updated?: string
           answering_mode_is_active?: boolean
+          paddle_customer_id?: string | null
+          subscription_status?: string | null
+          subscription_id?: string | null
+          subscription_tier?: string | null
+          credits_allocated_monthly?: number | null
+          subscription_renewal_date?: string | null
+          last_subscription_update?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -58,6 +72,13 @@ export type Database = {
           answering_mode_selected?: 'simple' | 'pro'
           answering_mode_last_updated?: string
           answering_mode_is_active?: boolean
+          paddle_customer_id?: string | null
+          subscription_status?: string | null
+          subscription_id?: string | null
+          subscription_tier?: string | null
+          credits_allocated_monthly?: number | null
+          subscription_renewal_date?: string | null
+          last_subscription_update?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -254,6 +275,50 @@ export type Database = {
           has_text?: boolean
           rating?: number
           version?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      subscriptions: {
+        Row: {
+          subscription_id: string
+          user_id: string
+          paddle_customer_id: string
+          subscription_status: string
+          price_id: string | null
+          product_id: string | null
+          scheduled_change: string | null
+          current_period_start: string | null
+          current_period_end: string | null
+          cancel_at_period_end: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          subscription_id: string
+          user_id: string
+          paddle_customer_id: string
+          subscription_status: string
+          price_id?: string | null
+          product_id?: string | null
+          scheduled_change?: string | null
+          current_period_start?: string | null
+          current_period_end?: string | null
+          cancel_at_period_end?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          subscription_id?: string
+          user_id?: string
+          paddle_customer_id?: string
+          subscription_status?: string
+          price_id?: string | null
+          product_id?: string | null
+          scheduled_change?: string | null
+          current_period_start?: string | null
+          current_period_end?: string | null
+          cancel_at_period_end?: boolean
           created_at?: string
           updated_at?: string
         }

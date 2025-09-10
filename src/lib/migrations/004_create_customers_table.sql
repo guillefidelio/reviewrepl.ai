@@ -1,0 +1,3 @@
+-- SIMPLIFIED APPROACH: Skip this migration
+-- We're using a simplified approach that stores Paddle customer ID directly in users table
+-- This avoids the need for a separate customers table
