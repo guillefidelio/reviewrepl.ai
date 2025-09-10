@@ -2,12 +2,13 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { 
-  Home, 
-  User as UserIcon, 
-  MessageSquare, 
+import {
+  Home,
+  User as UserIcon,
+  MessageSquare,
   Globe,
-  X
+  X,
+  CreditCard
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -36,12 +37,21 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       href: '/dashboard/answering-mode',
       icon: MessageSquare,
       description: 'Choose response method'
+    },
+    {
+      name: 'Billing',
+      href: '/pricing',
+      icon: CreditCard,
+      description: 'Manage subscription'
     }
   ];
 
   const isActive = (href: string) => {
     if (href === '/dashboard') {
       return pathname === '/dashboard';
+    }
+    if (href === '/pricing') {
+      return pathname === '/pricing';
     }
     return pathname.startsWith(href);
   };
