@@ -19,6 +19,7 @@ import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
 import { CheckoutHeader } from './checkout-header';
 import { CheckoutSummary } from './checkout-summary';
 import { CheckoutSkeleton } from './checkout-skeleton';
+import { validatePaddleConfig, PADDLE_CLIENT_TOKEN, PADDLE_ENVIRONMENT } from '@/lib/config';
 
 interface CheckoutContentsProps {
   priceId: string;
@@ -33,95 +34,9 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
   const [error, setError] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Validate required environment variables
+  // Simple validation using centralized config
   const validateEnvironment = useCallback(() => {
-    const requiredEnvVars = [
-      'NEXT_PUBLIC_PADDLE_CLIENT_TOKEN',
-      'NEXT_PUBLIC_PADDLE_ENV'
-    ];
-
-    console.log('🔍 Debug - Checking environment variables:');
-    console.log('NEXT_PUBLIC_PADDLE_CLIENT_TOKEN raw value:', `"${process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN}"`);
-    console.log('NEXT_PUBLIC_PADDLE_ENV raw value:', `"${process.env.NEXT_PUBLIC_PADDLE_ENV}"`);
-    console.log('NEXT_PUBLIC_PADDLE_CLIENT_TOKEN exists:', !!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN);
-    console.log('NEXT_PUBLIC_PADDLE_ENV exists:', !!process.env.NEXT_PUBLIC_PADDLE_ENV);
-    console.log('NEXT_PUBLIC_PADDLE_CLIENT_TOKEN truthy:', process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ? true : false);
-    console.log('NEXT_PUBLIC_PADDLE_ENV truthy:', process.env.NEXT_PUBLIC_PADDLE_ENV ? true : false);
-
-    // Detailed debugging of the filter operation
-    console.log('🔍 Debug - Filter operation details:');
-    const filterResults = requiredEnvVars.map(key => {
-      const rawValue = process.env[key];
-      const truthyCheck = !!rawValue;
-      const falsyCheck = !rawValue;
-      const stringValue = String(rawValue);
-      const trimmedValue = stringValue.trim();
-
-      return {
-        key,
-        rawValue,
-        stringValue,
-        trimmedValue,
-        length: stringValue.length,
-        isEmptyString: stringValue === '',
-        isWhitespaceOnly: stringValue.trim() === '',
-        truthyCheck, // !!value
-        falsyCheck,  // !value
-        willBeMissing: falsyCheck
-      };
-    });
-    console.log('Filter results:', filterResults);
-
-    // More robust check that handles empty strings
-    const missing = requiredEnvVars.filter(key => {
-      const value = process.env[key];
-      return !value || value.trim() === '';
-    });
-    console.log('Final missing array:', missing);
-
-    if (missing.length > 0) {
-      console.error('❌ Missing required Paddle environment variables:', missing);
-      console.error('This is happening at runtime in the browser');
-
-      // Check if this is a timing issue
-      console.log('⏰ Timing check - Current time:', new Date().toISOString());
-      console.log('🌐 Is this Vercel?', process.env.VERCEL === '1');
-      console.log('🏗️  Node env:', process.env.NODE_ENV);
-
-      // If we're in development, be more lenient
-      if (process.env.NODE_ENV !== 'production') {
-        console.warn('⚠️  Development mode detected - attempting to continue despite missing vars');
-        console.warn('This might resolve itself after a page refresh');
-
-        // Try again in 1 second
-        setTimeout(() => {
-          console.log('🔄 Retrying validation in development mode...');
-          const stillMissing = requiredEnvVars.filter(key => {
-            const value = process.env[key];
-            return !value || value.trim() === '';
-          });
-          if (stillMissing.length === 0) {
-            console.log('✅ Variables found on retry - clearing error');
-            setError(null);
-            // Trigger re-initialization
-            setIsLoading(true);
-            setTimeout(() => setIsLoading(false), 100);
-          } else {
-            console.error('❌ Variables still missing after retry');
-          }
-        }, 1000);
-
-        // For now, don't fail in development
-        return true;
-      }
-
-      console.error('Check your Vercel environment variables and redeploy');
-      setError(`Missing required configuration: ${missing.join(', ')}`);
-      return false;
-    }
-
-    console.log('✅ All environment variables found at runtime');
-    return true;
+    return validatePaddleConfig();
   }, []);
 
   // Get tier information from price ID
@@ -170,18 +85,16 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
         return;
       }
 
-      // Debug: Log only client-side environment variables (safe for production)
-      console.log('Paddle Debug - Environment Check:', {
-        clientToken: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ? 'SET' : 'NOT SET',
-        env: process.env.NEXT_PUBLIC_PADDLE_ENV || 'UNDEFINED',
-        availablePublicKeys: Object.keys(process.env).filter(key =>
-          key.startsWith('NEXT_PUBLIC_') && key.includes('PADDLE')
-        )
+      // Debug: Log configuration status (safe for production)
+      console.log('Paddle Debug - Configuration Check:', {
+        clientToken: PADDLE_CLIENT_TOKEN ? 'SET' : 'NOT SET',
+        environment: PADDLE_ENVIRONMENT || 'UNDEFINED',
+        configValid: validatePaddleConfig()
       });
 
       const paddleInstance = await initializePaddle({
-        token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
-        environment: (process.env.NEXT_PUBLIC_PADDLE_ENV as Environments) || 'sandbox',
+        token: PADDLE_CLIENT_TOKEN!,
+        environment: (PADDLE_ENVIRONMENT as Environments) || 'sandbox',
         eventCallback: (event) => {
           if (event.data && event.name) {
             handleCheckoutEvents(event.data as ExtendedCheckoutEventsData);
