@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useSupabaseAuth } from '@/components/auth/SupabaseAuthProvider';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -16,8 +16,40 @@ export default function SupabaseLoginPage() {
   const [position, setPosition] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const { signIn, signUp, signInWithGoogle, error, clearError } = useSupabaseAuth();
+  const { user, loading, signIn, signUp, signInWithGoogle, error, clearError } = useSupabaseAuth();
   const router = useRouter();
+
+  // Redirect authenticated users away from login page
+  React.useEffect(() => {
+    if (!loading && user) {
+      console.log('🔍 Login page - User already authenticated, redirecting to dashboard');
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't show login form if user is authenticated (will redirect)
+  if (user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Redirecting to dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
