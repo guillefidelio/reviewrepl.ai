@@ -8,6 +8,14 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  // Debug: Check what cookies are available in middleware
+  const allCookies = request.cookies.getAll();
+  console.log('🔍 Middleware cookies:', {
+    count: allCookies.length,
+    names: allCookies.map(c => c.name),
+    supabaseCookies: allCookies.filter(c => c.name.startsWith('sb-')).map(c => c.name)
+  });
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,

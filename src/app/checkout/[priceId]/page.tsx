@@ -22,43 +22,43 @@ export default async function CheckoutPage({ params }: { params: Promise<PathPar
     );
   }
 
-  try {
-    // 1. Direct server-side authentication check
-    const cookieStore = await cookies();
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll() {
-            // Not needed for read-only auth check
-          },
+  // ✅ Step 1: Perform the auth check OUTSIDE the try block
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
         },
-      }
-    );
-
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    console.log('🔍 Direct server auth check:', {
-      hasSession: !!sessionData.session,
-      hasUser: !!sessionData.session?.user,
-      sessionError: sessionError?.message,
-      userId: sessionData.session?.user?.id,
-      userEmail: sessionData.session?.user?.email,
-      cookiesCount: cookieStore.getAll().length,
-      cookieNames: cookieStore.getAll().map(c => c.name)
-    });
-
-    if (!sessionData.session?.user) {
-      console.log('❌ Checkout: No user session found, redirecting to login');
-      return redirect('/supabase-login?redirect=' + encodeURIComponent(`/checkout/${priceId}`));
+        setAll() {
+          // Not needed for read-only auth check
+        },
+      },
     }
+  );
 
-    const user = sessionData.session.user;
-    console.log('✅ Checkout: User authenticated, proceeding to Paddle:', { userId: user.id });
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  console.log('🔍 Direct server auth check:', {
+    hasSession: !!sessionData.session,
+    hasUser: !!sessionData.session?.user,
+    sessionError: sessionError?.message,
+    userId: sessionData.session?.user?.id,
+    userEmail: sessionData.session?.user?.email,
+    cookiesCount: cookieStore.getAll().length,
+    cookieNames: cookieStore.getAll().map(c => c.name)
+  });
 
+  if (!sessionData.session?.user) {
+    console.log('❌ Checkout: No user session found, redirecting to login');
+    return redirect('/supabase-login?redirect=' + encodeURIComponent(`/checkout/${priceId}`));
+  }
+
+  const user = sessionData.session.user;
+  console.log('✅ Checkout: User authenticated, proceeding to Paddle:', { userId: user.id });
+
+  try {
     // 2. Get server-side Paddle instance
     const paddle = getPaddleInstance();
 

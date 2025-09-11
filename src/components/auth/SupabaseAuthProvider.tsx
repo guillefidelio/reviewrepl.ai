@@ -33,8 +33,15 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log('🔍 SupabaseAuthProvider: Initializing client-side auth');
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('🔍 Client session loaded:', {
+        hasSession: !!session,
+        userId: session?.user?.id,
+        error: error?.message
+      });
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -43,7 +50,12 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔍 Client auth state change:', {
+        event,
+        hasSession: !!session,
+        userId: session?.user?.id
+      });
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
