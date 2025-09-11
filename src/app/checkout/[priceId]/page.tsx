@@ -1,7 +1,8 @@
 import { getPaddleInstance } from '@/lib/utils/paddle/get-paddle-instance';
 import { CheckoutContents } from '@/components/checkout/checkout-contents';
 import { notFound, redirect } from 'next/navigation';
-import { getUser } from '@/lib/utils/auth/get-user';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 
 interface PathParams {
   priceId: string;
@@ -22,14 +23,40 @@ export default async function CheckoutPage({ params }: { params: Promise<PathPar
   }
 
   try {
-    // 1. Try to get user (this might fail due to server-side auth issues)
-    const user = await getUser();
+    // 1. Direct server-side authentication check
+    const cookieStore = await cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll() {
+            // Not needed for read-only auth check
+          },
+        },
+      }
+    );
 
-    if (!user) {
-      console.log('❌ Checkout: No user found, redirecting to login');
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    console.log('🔍 Direct server auth check:', {
+      hasSession: !!sessionData.session,
+      hasUser: !!sessionData.session?.user,
+      sessionError: sessionError?.message,
+      userId: sessionData.session?.user?.id,
+      userEmail: sessionData.session?.user?.email,
+      cookiesCount: cookieStore.getAll().length,
+      cookieNames: cookieStore.getAll().map(c => c.name)
+    });
+
+    if (!sessionData.session?.user) {
+      console.log('❌ Checkout: No user session found, redirecting to login');
       return redirect('/supabase-login?redirect=' + encodeURIComponent(`/checkout/${priceId}`));
     }
 
+    const user = sessionData.session.user;
     console.log('✅ Checkout: User authenticated, proceeding to Paddle:', { userId: user.id });
 
     // 2. Get server-side Paddle instance
