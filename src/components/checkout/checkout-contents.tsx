@@ -46,11 +46,52 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
     console.log('NEXT_PUBLIC_PADDLE_CLIENT_TOKEN value:', process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ? 'SET' : 'UNDEFINED');
     console.log('NEXT_PUBLIC_PADDLE_ENV value:', process.env.NEXT_PUBLIC_PADDLE_ENV ? 'SET' : 'UNDEFINED');
 
+    // Detailed debugging of the filter operation
+    console.log('🔍 Debug - Filter operation details:');
+    const filterResults = requiredEnvVars.map(key => ({
+      key,
+      exists: !!process.env[key],
+      value: process.env[key],
+      willBeMissing: !process.env[key]
+    }));
+    console.log('Filter results:', filterResults);
+
     const missing = requiredEnvVars.filter(key => !process.env[key]);
+    console.log('Final missing array:', missing);
 
     if (missing.length > 0) {
       console.error('❌ Missing required Paddle environment variables:', missing);
       console.error('This is happening at runtime in the browser');
+
+      // Check if this is a timing issue
+      console.log('⏰ Timing check - Current time:', new Date().toISOString());
+      console.log('🌐 Is this Vercel?', process.env.VERCEL === '1');
+      console.log('🏗️  Node env:', process.env.NODE_ENV);
+
+      // If we're in development, be more lenient
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('⚠️  Development mode detected - attempting to continue despite missing vars');
+        console.warn('This might resolve itself after a page refresh');
+
+        // Try again in 1 second
+        setTimeout(() => {
+          console.log('🔄 Retrying validation in development mode...');
+          const stillMissing = requiredEnvVars.filter(key => !process.env[key]);
+          if (stillMissing.length === 0) {
+            console.log('✅ Variables found on retry - clearing error');
+            setError(null);
+            // Trigger re-initialization
+            setIsLoading(true);
+            setTimeout(() => setIsLoading(false), 100);
+          } else {
+            console.error('❌ Variables still missing after retry');
+          }
+        }, 1000);
+
+        // For now, don't fail in development
+        return true;
+      }
+
       console.error('Check your Vercel environment variables and redeploy');
       setError(`Missing required configuration: ${missing.join(', ')}`);
       return false;
