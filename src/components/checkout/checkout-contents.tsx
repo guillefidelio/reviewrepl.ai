@@ -33,6 +33,24 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
   const [error, setError] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
+  // Validate required environment variables
+  const validateEnvironment = useCallback(() => {
+    const requiredEnvVars = [
+      'NEXT_PUBLIC_PADDLE_CLIENT_TOKEN',
+      'NEXT_PUBLIC_PADDLE_ENV'
+    ];
+
+    const missing = requiredEnvVars.filter(key => !process.env[key]);
+
+    if (missing.length > 0) {
+      console.error('Missing required Paddle environment variables:', missing);
+      setError(`Missing required configuration: ${missing.join(', ')}`);
+      return false;
+    }
+
+    return true;
+  }, []);
+
   // Get tier information from price ID
   const tierId = getTierIdFromPriceId(priceId);
   const tier = tierId ? PricingTiers.find(t => t.id === tierId) : null;
@@ -69,27 +87,28 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
   useEffect(() => {
     const initializeCheckout = async () => {
       try {
-        // Ensure we're in the browser, component is mounted, and have required environment variables
+        // Ensure we're in the browser and component is mounted
         if (typeof window === 'undefined' || !isMounted) {
           return;
         }
 
-        // Debug: Log environment variables (remove this after debugging)
-        console.log('Paddle Debug - FINAL CHECK:', {
-          clientToken: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ? 'SET' : 'NOT SET',
-          env: process.env.NEXT_PUBLIC_PADDLE_ENV,
-          apiKey: process.env.PADDLE_API_KEY ? 'SET' : 'NOT SET',
-          allEnvKeys: Object.keys(process.env).filter(key => key.includes('PADDLE')),
-          actualApiKey: process.env.PADDLE_API_KEY || 'UNDEFINED',
-          allEnvVars: Object.keys(process.env).sort()
-        });
-
-        if (!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN) {
-          throw new Error('Paddle client token not configured');
+        // Validate environment variables first
+        if (!validateEnvironment()) {
+          setIsLoading(false);
+          return;
         }
 
+        // Debug: Log only client-side environment variables (safe for production)
+        console.log('Paddle Debug - Environment Check:', {
+          clientToken: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ? 'SET' : 'NOT SET',
+          env: process.env.NEXT_PUBLIC_PADDLE_ENV || 'UNDEFINED',
+          availablePublicKeys: Object.keys(process.env).filter(key =>
+            key.startsWith('NEXT_PUBLIC_') && key.includes('PADDLE')
+          )
+        });
+
         const paddleInstance = await initializePaddle({
-          token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN,
+          token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
           environment: (process.env.NEXT_PUBLIC_PADDLE_ENV as Environments) || 'sandbox',
           eventCallback: (event) => {
             if (event.data && event.name) {
@@ -154,7 +173,7 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
     if (!paddle && isMounted) {
       initializeCheckout();
     }
-  }, [paddle, priceId, userEmail, handleCheckoutEvents, isMounted]);
+  }, [isMounted, validateEnvironment]); // Simplified dependencies to prevent re-initialization
 
   // Cleanup effect
   useEffect(() => {

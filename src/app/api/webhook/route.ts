@@ -76,10 +76,21 @@ export async function POST(request: NextRequest) {
 /**
  * GET handler for webhook endpoint verification
  * Paddle may send GET requests to verify the endpoint
+ * Also includes debug info for environment variables
  */
 export async function GET() {
   return Response.json({
     status: 'ok',
-    message: 'Paddle webhook endpoint is active'
+    message: 'Paddle webhook endpoint is active',
+    debug: {
+      hasApiKey: !!process.env.PADDLE_API_KEY,
+      keyLength: process.env.PADDLE_API_KEY?.length || 0,
+      environment: process.env.NEXT_PUBLIC_PADDLE_ENV,
+      hasWebhookSecret: !!process.env.PADDLE_NOTIFICATION_WEBHOOK_SECRET,
+      webhookSecretLength: process.env.PADDLE_NOTIFICATION_WEBHOOK_SECRET?.length || 0,
+      // Check if API key starts with expected format (without exposing the key)
+      apiKeyFormatValid: process.env.PADDLE_API_KEY?.startsWith('pdl_') || false,
+      timestamp: new Date().toISOString()
+    }
   });
 }
