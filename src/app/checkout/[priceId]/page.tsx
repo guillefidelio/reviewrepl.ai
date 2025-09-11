@@ -39,16 +39,7 @@ export default async function CheckoutPage({ params }: { params: Promise<PathPar
     }
   );
 
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  console.log('🔍 Direct server auth check:', {
-    hasSession: !!sessionData.session,
-    hasUser: !!sessionData.session?.user,
-    sessionError: sessionError?.message,
-    userId: sessionData.session?.user?.id,
-    userEmail: sessionData.session?.user?.email,
-    cookiesCount: cookieStore.getAll().length,
-    cookieNames: cookieStore.getAll().map(c => c.name)
-  });
+    const { data: sessionData } = await supabase.auth.getSession();
 
   if (!sessionData.session?.user) {
     console.log('❌ Checkout: No user session found, redirecting to login');
