@@ -39,14 +39,14 @@ export default async function CheckoutPage({ params }: { params: Promise<PathPar
     }
   );
 
-    const { data: sessionData } = await supabase.auth.getSession();
+    const { data: userData, error: userError } = await supabase.auth.getUser();
 
-  if (!sessionData.session?.user) {
-    console.log('❌ Checkout: No user session found, redirecting to login');
+  if (userError || !userData.user) {
+    console.log('❌ Checkout: User authentication failed, redirecting to login');
     return redirect('/supabase-login?redirect=' + encodeURIComponent(`/checkout/${priceId}`));
   }
 
-  const user = sessionData.session.user;
+  const user = userData.user;
   console.log('✅ Checkout: User authenticated, proceeding to Paddle:', { userId: user.id });
 
   try {
@@ -60,6 +60,10 @@ export default async function CheckoutPage({ params }: { params: Promise<PathPar
         customerId: user.user_metadata?.paddle_customer_id,
         customData: { user_id: user.id }
       }),
+      // Try to force redirect mode
+      checkout: {
+        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/checkout/success`
+      }
     });
 
     if (!transaction.checkout?.url) {
