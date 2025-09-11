@@ -4,13 +4,13 @@ import { notFound, redirect } from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
-// Extended type to include successUrl and cancelUrl
+// Extended type to include success_url and cancel_url (Paddle API uses snake_case)
 interface ExtendedTransactionRequest {
   items: Array<{ priceId: string; quantity: number }>;
   customerId?: string;
   customData?: Record<string, unknown>;
-  successUrl?: string;
-  cancelUrl?: string;
+  success_url?: string;
+  cancel_url?: string;
 }
 
 interface PathParams {
@@ -65,9 +65,9 @@ export default async function CheckoutPage({ params }: { params: Promise<PathPar
     // 3. Create transaction to get checkout URL
     const transactionRequest: ExtendedTransactionRequest = {
       items: [{ priceId: priceId, quantity: 1 }],
-      // Set redirect URLs for after payment
-      successUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/checkout/success`,
-      cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/pricing`
+      // Set redirect URLs for after payment (Paddle API expects snake_case)
+      success_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/checkout/success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/pricing`
     };
 
     if (user) {
@@ -75,8 +75,7 @@ export default async function CheckoutPage({ params }: { params: Promise<PathPar
       transactionRequest.customData = { user_id: user.id };
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const transaction = await paddle.transactions.create(transactionRequest as any);
+    const transaction = await paddle.transactions.create(transactionRequest);
 
     if (!transaction.checkout?.url) {
       console.error('No checkout URL returned from Paddle');
