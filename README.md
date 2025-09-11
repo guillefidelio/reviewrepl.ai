@@ -1,6 +1,32 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started asdas
+## Getting Started
+
+### Environment Variables Setup
+
+**Important**: The build succeeds locally because it reads from `.env.local`, but Vercel needs environment variables configured in its dashboard for runtime.
+
+#### Required Vercel Environment Variables:
+```
+NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=your_paddle_client_token
+NEXT_PUBLIC_PADDLE_ENV=sandbox
+PADDLE_API_KEY=your_paddle_api_key
+PADDLE_NOTIFICATION_WEBHOOK_SECRET=your_webhook_secret
+```
+
+#### How to Set in Vercel:
+1. Go to your Vercel project dashboard
+2. Navigate to Settings → Environment Variables
+3. Add each variable with the exact same names
+4. **Important**: Use `NEXT_PUBLIC_` prefix for client-side variables
+5. Redeploy after adding variables
+
+#### Why This Matters:
+- ✅ **Build time**: Reads from local `.env.local`
+- ✅ **Runtime**: Reads from Vercel's environment variables
+- ❌ **Client-side**: Only sees `NEXT_PUBLIC_*` variables from Vercel
+
+**If you're seeing "All Paddle environments are set" in build but errors in browser, check Vercel env vars!**
 
 First, run the development server:
 
