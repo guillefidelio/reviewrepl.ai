@@ -4,6 +4,15 @@ import { notFound, redirect } from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 
+// Extended type to include successUrl and cancelUrl
+interface ExtendedTransactionRequest {
+  items: Array<{ priceId: string; quantity: number }>;
+  customerId?: string;
+  customData?: Record<string, unknown>;
+  successUrl?: string;
+  cancelUrl?: string;
+}
+
 interface PathParams {
   priceId: string;
 }
@@ -54,17 +63,20 @@ export default async function CheckoutPage({ params }: { params: Promise<PathPar
     const paddle = getPaddleInstance();
 
     // 3. Create transaction to get checkout URL
-    const transaction = await paddle.transactions.create({
+    const transactionRequest: ExtendedTransactionRequest = {
       items: [{ priceId: priceId, quantity: 1 }],
-      ...(user && {
-        customerId: user.user_metadata?.paddle_customer_id,
-        customData: { user_id: user.id }
-      }),
-      // Try to force redirect mode
-      checkout: {
-        url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/checkout/success`
-      }
-    });
+      // Set redirect URLs for after payment
+      successUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/checkout/success`,
+      cancelUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/pricing`
+    };
+
+    if (user) {
+      transactionRequest.customerId = user.user_metadata?.paddle_customer_id;
+      transactionRequest.customData = { user_id: user.id };
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const transaction = await paddle.transactions.create(transactionRequest as any);
 
     if (!transaction.checkout?.url) {
       console.error('No checkout URL returned from Paddle');
