@@ -24,9 +24,12 @@ export default function SupabaseLoginPage() {
     if (!loading && user) {
       // Check if there's a redirect URL in the query params
       const urlParams = new URLSearchParams(window.location.search);
-      const redirectTo = urlParams.get('redirect');
+      const encodedRedirectTo = urlParams.get('redirect');
 
-      if (redirectTo) {
+      if (encodedRedirectTo) {
+        // Decode the URL-encoded redirect parameter
+        const redirectTo = decodeURIComponent(encodedRedirectTo);
+        console.log('Redirecting to:', redirectTo);
         router.push(redirectTo);
       } else {
         router.push('/dashboard');
