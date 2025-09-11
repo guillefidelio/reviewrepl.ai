@@ -70,12 +70,15 @@ export default async function CheckoutPage({ params }: { params: Promise<PathPar
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/pricing`
     };
 
-    if (user) {
-      transactionRequest.customerId = user.user_metadata?.paddle_customer_id;
-      transactionRequest.customData = { user_id: user.id };
-    }
+  if (user) {
+    transactionRequest.customerId = user.user_metadata?.paddle_customer_id;
+    transactionRequest.customData = { user_id: user.id };
+  }
 
-    const transaction = await paddle.transactions.create(transactionRequest);
+  // 👇 ADD THIS LINE FOR DEBUGGING 👇
+  console.log('Sending this object to Paddle:', JSON.stringify(transactionRequest, null, 2));
+
+  const transaction = await paddle.transactions.create(transactionRequest);
 
     if (!transaction.checkout?.url) {
       console.error('No checkout URL returned from Paddle');
