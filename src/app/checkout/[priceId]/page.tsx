@@ -21,12 +21,17 @@ export default async function CheckoutPage({ params }: { params: Promise<PathPar
     );
   }
 
+  console.log('🔍 Checkout page - Checking authentication for priceId:', priceId);
+
   const user = await getUser();
 
   if (!user) {
+    console.log('❌ No user found, redirecting to login');
     // Redirect to login if not authenticated
     return redirect('/supabase-login?redirect=' + encodeURIComponent(`/checkout/${priceId}`));
   }
+
+  console.log('✅ User authenticated, proceeding with checkout:', { id: user.id, email: user.email });
 
   try {
     // 1. Get server-side Paddle instance
