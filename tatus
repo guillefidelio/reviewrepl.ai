@@ -1,1 +1,4 @@
 [33m101838d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Initial commit: Command Center Web App
+[33m32faf75[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Add debug functionality to webhook route for Paddle env verification
+[33m6a2f8ad[m Cleanup: Remove debug bypass, restore proper error handling
+[33m61882d4[m Debug: Temporarily bypass Paddle token check

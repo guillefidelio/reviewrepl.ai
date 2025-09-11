@@ -33,21 +33,48 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
   const [error, setError] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Validate required environment variables
+  // Validate required environment variables with retry logic
   const validateEnvironment = useCallback(() => {
     const requiredEnvVars = [
       'NEXT_PUBLIC_PADDLE_CLIENT_TOKEN',
       'NEXT_PUBLIC_PADDLE_ENV'
     ];
 
+    console.log('🔍 Debug - Checking environment variables:');
+    console.log('NEXT_PUBLIC_PADDLE_CLIENT_TOKEN exists:', !!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN);
+    console.log('NEXT_PUBLIC_PADDLE_ENV exists:', !!process.env.NEXT_PUBLIC_PADDLE_ENV);
+    console.log('NEXT_PUBLIC_PADDLE_CLIENT_TOKEN value:', process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ? 'SET' : 'UNDEFINED');
+    console.log('NEXT_PUBLIC_PADDLE_ENV value:', process.env.NEXT_PUBLIC_PADDLE_ENV ? 'SET' : 'UNDEFINED');
+
     const missing = requiredEnvVars.filter(key => !process.env[key]);
 
     if (missing.length > 0) {
-      console.error('Missing required Paddle environment variables:', missing);
-      setError(`Missing required configuration: ${missing.join(', ')}`);
-      return false;
+      console.error('❌ Missing required Paddle environment variables:', missing);
+      console.error('This is happening at runtime in the browser');
+
+      // In development, be more lenient - sometimes env vars load after component mount
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️  Development mode: Retrying validation in 2 seconds...');
+        setTimeout(() => {
+          const stillMissing = requiredEnvVars.filter(key => !process.env[key]);
+          if (stillMissing.length > 0) {
+            console.error('❌ Still missing after retry:', stillMissing);
+            setError(`Missing required configuration: ${stillMissing.join(', ')}`);
+          } else {
+            console.log('✅ Environment variables loaded after retry');
+            setError(null);
+            initializeCheckout();
+          }
+        }, 2000);
+        return false;
+      } else {
+        console.error('Check your Vercel environment variables and redeploy');
+        setError(`Missing required configuration: ${missing.join(', ')}`);
+        return false;
+      }
     }
 
+    console.log('✅ All environment variables found at runtime');
     return true;
   }, []);
 
