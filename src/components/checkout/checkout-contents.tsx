@@ -102,14 +102,14 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
         },
         checkout: {
           settings: {
-            variant: 'one-page',
-            displayMode: 'inline',
-            theme: 'light',
-            allowLogout: !userEmail,
-            frameTarget: 'paddle-checkout-frame',
-            frameInitialHeight: 450,
+            variant: 'one-page',           // ← Inline checkout (from guide)
+            displayMode: 'inline',         // ← Embedded in page (from guide)
+            theme: 'light',                // ← Light theme to match our UI
+            allowLogout: !userEmail,       // ← Logout button if no user
+            frameTarget: 'paddle-checkout-frame', // ← DOM target (from guide)
+            frameInitialHeight: 450,       // ← Initial height (from guide)
             frameStyle: 'width: 100%; background-color: transparent; border: none',
-            successUrl: `${window.location.origin}/checkout/success`,
+            // Note: successUrl removed for inline mode - handled by event callbacks
           },
         },
       });
@@ -117,32 +117,68 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
       if (paddleInstance && priceId) {
         setPaddle(paddleInstance);
 
-        // Use Paddle's simple checkout API
-        console.log('🔗 Opening Paddle checkout...');
-        try {
-          paddleInstance.Checkout.open({
-            ...(userEmail && { customer: { email: userEmail } }),
-            items: [{ priceId: priceId, quantity: 1 }],
-            customData: {
-              userId: user?.id,
-              source: 'web_app'
+        // Follow the guide's approach: wait for DOM, then open checkout
+        console.log('🔗 Setting up Paddle checkout opening with proper timing...');
+
+        // Wait for DOM to be fully ready (following guide's approach)
+        const openCheckoutWithRetry = (attempts = 0) => {
+          const maxAttempts = 5;
+          const frameElement = document.getElementById('paddle-checkout-frame');
+
+          if (frameElement) {
+            console.log('✅ Checkout frame element found, opening Paddle checkout...');
+            try {
+              // Open checkout immediately when frame is ready
+              paddleInstance.Checkout.open({
+                ...(userEmail && { customer: { email: userEmail } }), // ← Pre-fills email if logged in (from guide)
+                items: [{ priceId: priceId, quantity: 1 }], // ← Uses the price ID from URL (from guide)
+                customData: {
+                  userId: user?.id,
+                  source: 'web_app'
+                }
+              });
+
+              console.log('✅ Paddle checkout opened successfully');
+              setIsLoading(false);
+            } catch (checkoutError) {
+              console.error('❌ Error opening Paddle checkout:', checkoutError);
+              console.error('Error details:', checkoutError instanceof Error ? checkoutError.message : 'Unknown error');
+
+              // Specific handling for appendChild errors
+              if (checkoutError instanceof Error && checkoutError.message?.includes('appendChild')) {
+                console.error('🚨 appendChild error - DOM manipulation issue');
+                console.error('This suggests Paddle cannot append iframe to target element');
+
+                // Check the target element's state
+                const targetElement = document.getElementById('paddle-checkout-frame');
+                console.log('Target element diagnostic:', {
+                  exists: !!targetElement,
+                  id: targetElement?.id,
+                  tagName: targetElement?.tagName,
+                  clientWidth: targetElement?.clientWidth,
+                  clientHeight: targetElement?.clientHeight,
+                  isConnected: targetElement?.isConnected,
+                  parentElement: targetElement?.parentElement?.tagName
+                });
+              }
+
+              setError('Failed to open checkout. Please refresh the page and try again.');
+              setIsLoading(false);
             }
-          });
-
-          console.log('✅ Paddle checkout opened successfully');
-        } catch (checkoutError) {
-          console.error('❌ Error opening Paddle checkout:', checkoutError);
-          console.error('Error details:', checkoutError instanceof Error ? checkoutError.message : 'Unknown error');
-          console.error('This might be due to DOM timing issues or iframe creation problems');
-
-          // Provide more helpful error message
-          if (checkoutError instanceof Error && checkoutError.message?.includes('appendChild')) {
-            console.error('🚨 appendChild error suggests DOM element issues');
-            console.error('The checkout frame element might not be properly available');
+          } else {
+            if (attempts < maxAttempts) {
+              console.log(`⏳ Frame element not ready, attempt ${attempts + 1}/${maxAttempts}, retrying...`);
+              setTimeout(() => openCheckoutWithRetry(attempts + 1), 300);
+            } else {
+              console.error('❌ Checkout frame element not found after maximum attempts');
+              setError('Checkout container not ready. Please refresh the page.');
+              setIsLoading(false);
+            }
           }
+        };
 
-          setError('Failed to open checkout. This might be a temporary issue. Please refresh the page and try again.');
-        }
+        // Start the checkout opening process with a small delay
+        setTimeout(openCheckoutWithRetry, 200);
       }
 
       setIsLoading(false);
