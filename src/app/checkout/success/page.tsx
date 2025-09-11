@@ -17,7 +17,7 @@ export default function CheckoutSuccessPage() {
   }, [refreshSubscriptions]);
 
   if (!user) {
-    router.push('/auth');
+    router.push('/supabase-login?redirect=/checkout/success');
     return null;
   }
 
