@@ -22,8 +22,17 @@ export default function SupabaseLoginPage() {
   // Redirect authenticated users away from login page
   React.useEffect(() => {
     if (!loading && user) {
-      console.log('🔍 Login page - User already authenticated, redirecting to dashboard');
-      router.push('/dashboard');
+      // Check if there's a redirect URL in the query params
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectTo = urlParams.get('redirect');
+
+      if (redirectTo) {
+        console.log('🔍 Login page - User authenticated, redirecting to:', redirectTo);
+        router.push(redirectTo);
+      } else {
+        console.log('🔍 Login page - User authenticated, redirecting to dashboard');
+        router.push('/dashboard');
+      }
     }
   }, [user, loading, router]);
 
