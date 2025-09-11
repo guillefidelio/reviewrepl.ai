@@ -4,8 +4,16 @@ export async function getUser() {
   try {
     const supabase = await createClient();
 
-    // Get session from cookies
+    // Get session from cookies - this should work with middleware
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+    console.log('🔍 Server-side auth check:', {
+      hasSession: !!sessionData.session,
+      hasUser: !!sessionData.session?.user,
+      sessionError: sessionError?.message,
+      userId: sessionData.session?.user?.id,
+      userEmail: sessionData.session?.user?.email
+    });
 
     if (sessionError) {
       console.error('❌ Session error:', sessionError.message);

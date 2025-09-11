@@ -1,6 +1,6 @@
 import { getPaddleInstance } from '@/lib/utils/paddle/get-paddle-instance';
 import { CheckoutContents } from '@/components/checkout/checkout-contents';
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { getUser } from '@/lib/utils/auth/get-user';
 
 interface PathParams {
@@ -21,24 +21,20 @@ export default async function CheckoutPage({ params }: { params: Promise<PathPar
     );
   }
 
-  const user = await getUser();
-
-  if (!user) {
-    // Redirect to login if not authenticated
-    return redirect('/supabase-login?redirect=' + encodeURIComponent(`/checkout/${priceId}`));
-  }
-
   try {
-    // 1. Get server-side Paddle instance
+    // 1. Try to get user (this might fail due to server-side auth issues)
+    const user = await getUser();
+
+    // 2. Get server-side Paddle instance
     const paddle = getPaddleInstance();
 
-    // 2. Create transaction to get checkout URL
+    // 3. Create transaction to get checkout URL
     const transaction = await paddle.transactions.create({
       items: [{ priceId: priceId, quantity: 1 }],
-      customerId: user.user_metadata?.paddle_customer_id, // Use existing customer if available
-      customData: {
-        user_id: user.id,
-      },
+      ...(user && {
+        customerId: user.user_metadata?.paddle_customer_id,
+        customData: { user_id: user.id }
+      }),
     });
 
     if (!transaction.checkout?.url) {
@@ -48,7 +44,8 @@ export default async function CheckoutPage({ params }: { params: Promise<PathPar
 
     console.log('✅ Paddle checkout URL created:', transaction.checkout.url);
 
-    // 3. Pass the checkout URL to client component for redirect
+    // 4. Pass the checkout URL to client component
+    // Client component will handle authentication check and redirect if needed
     return <CheckoutContents checkoutUrl={transaction.checkout.url} />;
 
   } catch (error) {
