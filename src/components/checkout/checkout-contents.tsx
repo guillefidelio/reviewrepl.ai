@@ -128,18 +128,24 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
           if (frameElement) {
             console.log('✅ Checkout frame element found, opening Paddle checkout...');
             try {
-              // Open checkout immediately when frame is ready
-              paddleInstance.Checkout.open({
-                ...(userEmail && { customer: { email: userEmail } }), // ← Pre-fills email if logged in (from guide)
-                items: [{ priceId: priceId, quantity: 1 }], // ← Uses the price ID from URL (from guide)
-                customData: {
-                  userId: user?.id,
-                  source: 'web_app'
-                }
-              });
+              // ✅ CORRECT: Use the 'paddle' state variable, not 'paddleInstance'
+              if (paddle) {
+                paddle.Checkout.open({
+                  ...(userEmail && { customer: { email: userEmail } }), // ← Pre-fills email if logged in (from guide)
+                  items: [{ priceId: priceId, quantity: 1 }], // ← Uses the price ID from URL (from guide)
+                  customData: {
+                    userId: user?.id,
+                    source: 'web_app'
+                  }
+                });
 
-              console.log('✅ Paddle checkout opened successfully');
-              setIsLoading(false);
+                console.log('✅ Paddle checkout opened successfully');
+                setIsLoading(false);
+              } else {
+                console.error('❌ Paddle instance is not available');
+                setError('Checkout service not ready. Please refresh the page.');
+                setIsLoading(false);
+              }
             } catch (checkoutError) {
               console.error('❌ Error opening Paddle checkout:', checkoutError);
               console.error('Error details:', checkoutError instanceof Error ? checkoutError.message : 'Unknown error');
@@ -187,7 +193,7 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
       setError('Failed to load checkout. Please refresh the page.');
       setIsLoading(false);
     }
-  }, [isMounted, validateEnvironment, handleCheckoutEvents, priceId, userEmail, user?.id]);
+  }, [isMounted, validateEnvironment, handleCheckoutEvents, priceId, userEmail, user?.id, paddle]);
 
   // Initialize Paddle when component mounts and no paddle instance exists
   useEffect(() => {
