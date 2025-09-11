@@ -8,6 +8,7 @@ import { cookies } from 'next/headers';
 interface ExtendedTransactionRequest {
   items: Array<{ priceId: string; quantity: number }>;
   customerId?: string;
+  customer?: { email: string };
   customData?: Record<string, unknown>;
   success_url?: string;
   cancel_url?: string;
@@ -67,13 +68,22 @@ export default async function CheckoutPage({ params }: { params: Promise<PathPar
       items: [{ priceId: priceId, quantity: 1 }],
       // Set redirect URLs for after payment (Paddle API expects snake_case)
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/checkout/success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/pricing`
+      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/pricing`,
+      customData: { user_id: user.id },
     };
 
-  if (user) {
-    transactionRequest.customerId = user.user_metadata?.paddle_customer_id;
-    transactionRequest.customData = { user_id: user.id };
-  }
+    // 👇 THIS IS THE NEW LOGIC TO HANDLE BOTH CUSTOMER TYPES 👇
+    const paddleCustomerId = user.user_metadata?.paddle_customer_id;
+
+    if (paddleCustomerId) {
+      // If the user is an EXISTING Paddle customer, use their ID
+      transactionRequest.customerId = paddleCustomerId;
+    } else {
+      // If the user is a NEW customer, create a customer on the fly using their email
+      transactionRequest.customer = {
+        email: user.email!,
+      };
+    }
 
   // 👇 ADD THIS LINE FOR DEBUGGING 👇
   console.log('Sending this object to Paddle:', JSON.stringify(transactionRequest, null, 2));
