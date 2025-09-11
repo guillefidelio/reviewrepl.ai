@@ -33,7 +33,7 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
   const [error, setError] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Validate required environment variables with retry logic
+  // Validate required environment variables
   const validateEnvironment = useCallback(() => {
     const requiredEnvVars = [
       'NEXT_PUBLIC_PADDLE_CLIENT_TOKEN',
@@ -51,27 +51,9 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
     if (missing.length > 0) {
       console.error('❌ Missing required Paddle environment variables:', missing);
       console.error('This is happening at runtime in the browser');
-
-      // In development, be more lenient - sometimes env vars load after component mount
-      if (process.env.NODE_ENV === 'development') {
-        console.warn('⚠️  Development mode: Retrying validation in 2 seconds...');
-        setTimeout(() => {
-          const stillMissing = requiredEnvVars.filter(key => !process.env[key]);
-          if (stillMissing.length > 0) {
-            console.error('❌ Still missing after retry:', stillMissing);
-            setError(`Missing required configuration: ${stillMissing.join(', ')}`);
-          } else {
-            console.log('✅ Environment variables loaded after retry');
-            setError(null);
-            initializeCheckout();
-          }
-        }, 2000);
-        return false;
-      } else {
-        console.error('Check your Vercel environment variables and redeploy');
-        setError(`Missing required configuration: ${missing.join(', ')}`);
-        return false;
-      }
+      console.error('Check your Vercel environment variables and redeploy');
+      setError(`Missing required configuration: ${missing.join(', ')}`);
+      return false;
     }
 
     console.log('✅ All environment variables found at runtime');
@@ -110,97 +92,98 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
     setIsMounted(true);
   }, []);
 
-  // Initialize Paddle
-  useEffect(() => {
-    const initializeCheckout = async () => {
-      try {
-        // Ensure we're in the browser and component is mounted
-        if (typeof window === 'undefined' || !isMounted) {
-          return;
-        }
-
-        // Validate environment variables first
-        if (!validateEnvironment()) {
-          setIsLoading(false);
-          return;
-        }
-
-        // Debug: Log only client-side environment variables (safe for production)
-        console.log('Paddle Debug - Environment Check:', {
-          clientToken: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ? 'SET' : 'NOT SET',
-          env: process.env.NEXT_PUBLIC_PADDLE_ENV || 'UNDEFINED',
-          availablePublicKeys: Object.keys(process.env).filter(key =>
-            key.startsWith('NEXT_PUBLIC_') && key.includes('PADDLE')
-          )
-        });
-
-        const paddleInstance = await initializePaddle({
-          token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
-          environment: (process.env.NEXT_PUBLIC_PADDLE_ENV as Environments) || 'sandbox',
-          eventCallback: (event) => {
-            if (event.data && event.name) {
-              handleCheckoutEvents(event.data as ExtendedCheckoutEventsData);
-            }
-          },
-          checkout: {
-            settings: {
-              variant: 'one-page',
-              displayMode: 'inline',
-              theme: 'light',
-              allowLogout: !userEmail,
-              frameTarget: 'paddle-checkout-frame',
-              frameInitialHeight: 450,
-              frameStyle: 'width: 100%; background-color: transparent; border: none',
-              successUrl: `${window.location.origin}/checkout/success`,
-            },
-          },
-        });
-
-        if (paddleInstance && priceId) {
-          setPaddle(paddleInstance);
-
-          // Wait for DOM to be ready before opening checkout
-          const checkAndOpenCheckout = () => {
-            const checkoutFrame = document.getElementById('paddle-checkout-frame');
-            if (checkoutFrame) {
-              try {
-                // Open checkout
-                paddleInstance.Checkout.open({
-                  ...(userEmail && { customer: { email: userEmail } }),
-                  items: [{ priceId: priceId, quantity: 1 }],
-                });
-              } catch (checkoutError) {
-                console.error('Error opening Paddle checkout:', checkoutError);
-                setError('Failed to open checkout. Please refresh the page.');
-              }
-            } else {
-              console.error('Paddle checkout frame not found');
-              setError('Checkout container not ready. Please refresh the page.');
-            }
-          };
-
-          // Use requestAnimationFrame for better timing
-          if (typeof window !== 'undefined' && window.requestAnimationFrame) {
-            window.requestAnimationFrame(() => {
-              setTimeout(checkAndOpenCheckout, 50);
-            });
-          } else {
-            setTimeout(checkAndOpenCheckout, 100);
-          }
-        }
-
-        setIsLoading(false);
-      } catch (err) {
-        console.error('Failed to initialize Paddle:', err);
-          setError('Failed to load checkout. Please refresh the page.');
-        setIsLoading(false);
+  // Initialize Paddle checkout
+  const initializeCheckout = useCallback(async () => {
+    try {
+      // Ensure we're in the browser and component is mounted
+      if (typeof window === 'undefined' || !isMounted) {
+        return;
       }
-    };
 
+      // Validate environment variables first
+      if (!validateEnvironment()) {
+        setIsLoading(false);
+        return;
+      }
+
+      // Debug: Log only client-side environment variables (safe for production)
+      console.log('Paddle Debug - Environment Check:', {
+        clientToken: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ? 'SET' : 'NOT SET',
+        env: process.env.NEXT_PUBLIC_PADDLE_ENV || 'UNDEFINED',
+        availablePublicKeys: Object.keys(process.env).filter(key =>
+          key.startsWith('NEXT_PUBLIC_') && key.includes('PADDLE')
+        )
+      });
+
+      const paddleInstance = await initializePaddle({
+        token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
+        environment: (process.env.NEXT_PUBLIC_PADDLE_ENV as Environments) || 'sandbox',
+        eventCallback: (event) => {
+          if (event.data && event.name) {
+            handleCheckoutEvents(event.data as ExtendedCheckoutEventsData);
+          }
+        },
+        checkout: {
+          settings: {
+            variant: 'one-page',
+            displayMode: 'inline',
+            theme: 'light',
+            allowLogout: !userEmail,
+            frameTarget: 'paddle-checkout-frame',
+            frameInitialHeight: 450,
+            frameStyle: 'width: 100%; background-color: transparent; border: none',
+            successUrl: `${window.location.origin}/checkout/success`,
+          },
+        },
+      });
+
+      if (paddleInstance && priceId) {
+        setPaddle(paddleInstance);
+
+        // Wait for DOM to be ready before opening checkout
+        const checkAndOpenCheckout = () => {
+          const checkoutFrame = document.getElementById('paddle-checkout-frame');
+          if (checkoutFrame) {
+            try {
+              // Open checkout
+              paddleInstance.Checkout.open({
+                ...(userEmail && { customer: { email: userEmail } }),
+                items: [{ priceId: priceId, quantity: 1 }],
+              });
+            } catch (checkoutError) {
+              console.error('Error opening Paddle checkout:', checkoutError);
+              setError('Failed to open checkout. Please refresh the page.');
+            }
+          } else {
+            console.error('Paddle checkout frame not found');
+            setError('Checkout container not ready. Please refresh the page.');
+          }
+        };
+
+        // Use requestAnimationFrame for better timing
+        if (typeof window !== 'undefined' && window.requestAnimationFrame) {
+          window.requestAnimationFrame(() => {
+            setTimeout(checkAndOpenCheckout, 50);
+          });
+        } else {
+          setTimeout(checkAndOpenCheckout, 100);
+        }
+      }
+
+      setIsLoading(false);
+    } catch (err) {
+      console.error('Failed to initialize Paddle:', err);
+      setError('Failed to load checkout. Please refresh the page.');
+      setIsLoading(false);
+    }
+  }, [isMounted, validateEnvironment, handleCheckoutEvents, priceId, userEmail]);
+
+  // Initialize Paddle when component mounts and no paddle instance exists
+  useEffect(() => {
     if (!paddle && isMounted) {
       initializeCheckout();
     }
-  }, [isMounted, validateEnvironment]); // Simplified dependencies to prevent re-initialization
+  }, [paddle, isMounted, initializeCheckout]);
 
   // Cleanup effect
   useEffect(() => {
