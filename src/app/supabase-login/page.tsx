@@ -27,10 +27,8 @@ export default function SupabaseLoginPage() {
       const redirectTo = urlParams.get('redirect');
 
       if (redirectTo) {
-        console.log('🔍 Login page - User authenticated, redirecting to:', redirectTo);
         router.push(redirectTo);
       } else {
-        console.log('🔍 Login page - User authenticated, redirecting to dashboard');
         router.push('/dashboard');
       }
     }
