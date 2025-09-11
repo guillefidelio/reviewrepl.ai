@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import type { PaddleEventData, DisplayMode, Theme, Variant } from '@paddle/paddle-js';
 
 interface CheckoutContentsProps {
   priceId: string;
@@ -11,7 +12,6 @@ interface CheckoutContentsProps {
 
 export function CheckoutContents({ priceId, userEmail, userId }: CheckoutContentsProps) {
   const router = useRouter();
-  const [paddle, setPaddle] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Handle Paddle redirect back to our site
@@ -40,13 +40,13 @@ export function CheckoutContents({ priceId, userEmail, userId }: CheckoutContent
         console.log('🔍 Initializing Paddle.js checkout for priceId:', priceId);
 
         // Dynamic import to avoid SSR issues
-        const { Paddle } = await import('@paddle/paddle-js');
+        const { initializePaddle } = await import('@paddle/paddle-js');
 
         // Initialize Paddle with client token
-        const paddleInstance = await Paddle.initialize({
+        const paddleInstance = await initializePaddle({
           token: process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN!,
           environment: (process.env.NEXT_PUBLIC_PADDLE_ENV as 'sandbox' | 'production') || 'sandbox',
-          eventCallback: (event: any) => {
+          eventCallback: (event: PaddleEventData) => {
             console.log('🔍 Paddle event:', event.name, event.data);
 
             if (event.name === 'checkout.completed') {
@@ -60,17 +60,33 @@ export function CheckoutContents({ priceId, userEmail, userId }: CheckoutContent
         });
 
         console.log('✅ Paddle.js initialized successfully');
-        setPaddle(paddleInstance);
+
+        if (!paddleInstance) {
+          throw new Error('Failed to initialize Paddle instance');
+        }
 
         // Create checkout session
-        const checkoutConfig = {
+        const checkoutConfig: {
+          items: { priceId: string; quantity: number }[];
+          settings: {
+            displayMode: DisplayMode;
+            variant: Variant;
+            successUrl: string;
+            cancelUrl: string;
+            theme: Theme;
+            locale: string;
+            showAddDiscounts: boolean;
+          };
+          customData: { user_id?: string };
+          customer?: { email: string };
+        } = {
           items: [{ priceId: priceId, quantity: 1 }],
           settings: {
-            displayMode: 'overlay', // or 'inline'
-            variant: 'one-page',
+            displayMode: 'overlay' as DisplayMode,
+            variant: 'one-page' as Variant,
             successUrl: `${window.location.origin}/checkout/success`,
             cancelUrl: `${window.location.origin}/pricing`,
-            theme: 'light', // or 'dark'
+            theme: 'light' as Theme,
             locale: 'en',
             showAddDiscounts: true,
           },
