@@ -117,36 +117,32 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
       if (paddleInstance && priceId) {
         setPaddle(paddleInstance);
 
-        // Wait for DOM to be ready before opening checkout
-        const checkAndOpenCheckout = (attempts = 0) => {
-          const checkoutFrame = document.getElementById('paddle-checkout-frame');
+        // Use Paddle's simple checkout API
+        console.log('🔗 Opening Paddle checkout...');
+        try {
+          paddleInstance.Checkout.open({
+            ...(userEmail && { customer: { email: userEmail } }),
+            items: [{ priceId: priceId, quantity: 1 }],
+            customData: {
+              userId: user?.id,
+              source: 'web_app'
+            }
+          });
 
-          if (checkoutFrame) {
-            console.log('✅ Checkout frame found, opening Paddle checkout...');
-            try {
-              // Open checkout
-              paddleInstance.Checkout.open({
-                ...(userEmail && { customer: { email: userEmail } }),
-                items: [{ priceId: priceId, quantity: 1 }],
-              });
-              console.log('✅ Paddle checkout opened successfully');
-            } catch (checkoutError) {
-              console.error('❌ Error opening Paddle checkout:', checkoutError);
-              setError('Failed to open checkout. Please refresh the page.');
-            }
-          } else {
-            if (attempts < 10) { // Try up to 10 times
-              console.log(`⏳ Checkout frame not ready, attempt ${attempts + 1}/10, retrying...`);
-              setTimeout(() => checkAndOpenCheckout(attempts + 1), 200);
-            } else {
-              console.error('❌ Paddle checkout frame not found after 10 attempts');
-              setError('Checkout container not ready. Please refresh the page.');
-            }
+          console.log('✅ Paddle checkout opened successfully');
+        } catch (checkoutError) {
+          console.error('❌ Error opening Paddle checkout:', checkoutError);
+          console.error('Error details:', checkoutError instanceof Error ? checkoutError.message : 'Unknown error');
+          console.error('This might be due to DOM timing issues or iframe creation problems');
+
+          // Provide more helpful error message
+          if (checkoutError instanceof Error && checkoutError.message?.includes('appendChild')) {
+            console.error('🚨 appendChild error suggests DOM element issues');
+            console.error('The checkout frame element might not be properly available');
           }
-        };
 
-        // Start checking immediately, then retry if needed
-        setTimeout(checkAndOpenCheckout, 100);
+          setError('Failed to open checkout. This might be a temporary issue. Please refresh the page and try again.');
+        }
       }
 
       setIsLoading(false);
@@ -155,7 +151,7 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
       setError('Failed to load checkout. Please refresh the page.');
       setIsLoading(false);
     }
-  }, [isMounted, validateEnvironment, handleCheckoutEvents, priceId, userEmail]);
+  }, [isMounted, validateEnvironment, handleCheckoutEvents, priceId, userEmail, user?.id]);
 
   // Initialize Paddle when component mounts and no paddle instance exists
   useEffect(() => {
