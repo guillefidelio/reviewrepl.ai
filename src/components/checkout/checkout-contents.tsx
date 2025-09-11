@@ -14,6 +14,19 @@ export function CheckoutContents({ checkoutUrl }: CheckoutContentsProps) {
   const pathname = usePathname();
   const [hasRedirected, setHasRedirected] = useState(false);
 
+  // Handle Paddle redirect back to our site
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // Check if this is a Paddle redirect back to our site
+    if (urlParams.has('_ptxn')) {
+      console.log('🔍 Detected Paddle redirect back to site');
+      // This is a successful payment - redirect to success page
+      router.push('/checkout/success');
+      return;
+    }
+  }, [router]);
+
   // Handle authentication and redirect
   useEffect(() => {
     if (loading) return; // Still loading auth state
