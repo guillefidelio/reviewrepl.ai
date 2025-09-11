@@ -41,22 +41,42 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
     ];
 
     console.log('🔍 Debug - Checking environment variables:');
+    console.log('NEXT_PUBLIC_PADDLE_CLIENT_TOKEN raw value:', `"${process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN}"`);
+    console.log('NEXT_PUBLIC_PADDLE_ENV raw value:', `"${process.env.NEXT_PUBLIC_PADDLE_ENV}"`);
     console.log('NEXT_PUBLIC_PADDLE_CLIENT_TOKEN exists:', !!process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN);
     console.log('NEXT_PUBLIC_PADDLE_ENV exists:', !!process.env.NEXT_PUBLIC_PADDLE_ENV);
-    console.log('NEXT_PUBLIC_PADDLE_CLIENT_TOKEN value:', process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ? 'SET' : 'UNDEFINED');
-    console.log('NEXT_PUBLIC_PADDLE_ENV value:', process.env.NEXT_PUBLIC_PADDLE_ENV ? 'SET' : 'UNDEFINED');
+    console.log('NEXT_PUBLIC_PADDLE_CLIENT_TOKEN truthy:', process.env.NEXT_PUBLIC_PADDLE_CLIENT_TOKEN ? true : false);
+    console.log('NEXT_PUBLIC_PADDLE_ENV truthy:', process.env.NEXT_PUBLIC_PADDLE_ENV ? true : false);
 
     // Detailed debugging of the filter operation
     console.log('🔍 Debug - Filter operation details:');
-    const filterResults = requiredEnvVars.map(key => ({
-      key,
-      exists: !!process.env[key],
-      value: process.env[key],
-      willBeMissing: !process.env[key]
-    }));
+    const filterResults = requiredEnvVars.map(key => {
+      const rawValue = process.env[key];
+      const truthyCheck = !!rawValue;
+      const falsyCheck = !rawValue;
+      const stringValue = String(rawValue);
+      const trimmedValue = stringValue.trim();
+
+      return {
+        key,
+        rawValue,
+        stringValue,
+        trimmedValue,
+        length: stringValue.length,
+        isEmptyString: stringValue === '',
+        isWhitespaceOnly: stringValue.trim() === '',
+        truthyCheck, // !!value
+        falsyCheck,  // !value
+        willBeMissing: falsyCheck
+      };
+    });
     console.log('Filter results:', filterResults);
 
-    const missing = requiredEnvVars.filter(key => !process.env[key]);
+    // More robust check that handles empty strings
+    const missing = requiredEnvVars.filter(key => {
+      const value = process.env[key];
+      return !value || value.trim() === '';
+    });
     console.log('Final missing array:', missing);
 
     if (missing.length > 0) {
@@ -76,7 +96,10 @@ export function CheckoutContents({ priceId, userEmail }: CheckoutContentsProps) 
         // Try again in 1 second
         setTimeout(() => {
           console.log('🔄 Retrying validation in development mode...');
-          const stillMissing = requiredEnvVars.filter(key => !process.env[key]);
+          const stillMissing = requiredEnvVars.filter(key => {
+            const value = process.env[key];
+            return !value || value.trim() === '';
+          });
           if (stillMissing.length === 0) {
             console.log('✅ Variables found on retry - clearing error');
             setError(null);
