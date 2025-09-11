@@ -1,18 +1,7 @@
-import { getPaddleInstance } from '@/lib/utils/paddle/get-paddle-instance';
 import { CheckoutContents } from '@/components/checkout/checkout-contents';
-import { notFound, redirect } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-
-// Extended type to include success_url and cancel_url (Paddle API uses snake_case)
-interface ExtendedTransactionRequest {
-  items: Array<{ priceId: string; quantity: number }>;
-  customerId?: string;
-  customer?: { email: string };
-  customData?: Record<string, unknown>;
-  success_url?: string;
-  cancel_url?: string;
-}
 
 interface PathParams {
   priceId: string;
@@ -60,46 +49,13 @@ export default async function CheckoutPage({ params }: { params: Promise<PathPar
   console.log('✅ Checkout: User authenticated, proceeding to Paddle:', { userId: user.id });
 
   try {
-    // 2. Get server-side Paddle instance
-    const paddle = getPaddleInstance();
+    // Instead of creating a transaction, we'll create a checkout session on the client side
+    // Pass the user info to the client component for proper Paddle.js initialization
 
-    // 3. Create transaction to get checkout URL
-    const transactionRequest: ExtendedTransactionRequest = {
-      items: [{ priceId: priceId, quantity: 1 }],
-      // Set redirect URLs for after payment (Paddle API expects snake_case)
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/checkout/success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/pricing`,
-      customData: { user_id: user.id },
-    };
+    console.log('✅ Checkout: Passing priceId and user info to client component for Paddle.js checkout');
 
-    // 👇 THIS IS THE NEW LOGIC TO HANDLE BOTH CUSTOMER TYPES 👇
-    const paddleCustomerId = user.user_metadata?.paddle_customer_id;
-
-    if (paddleCustomerId) {
-      // If the user is an EXISTING Paddle customer, use their ID
-      transactionRequest.customerId = paddleCustomerId;
-    } else {
-      // If the user is a NEW customer, create a customer on the fly using their email
-      transactionRequest.customer = {
-        email: user.email!,
-      };
-    }
-
-  // 👇 ADD THIS LINE FOR DEBUGGING 👇
-  console.log('Sending this object to Paddle:', JSON.stringify(transactionRequest, null, 2));
-
-  const transaction = await paddle.transactions.create(transactionRequest);
-
-    if (!transaction.checkout?.url) {
-      console.error('No checkout URL returned from Paddle');
-      return notFound();
-    }
-
-    console.log('✅ Paddle checkout URL created:', transaction.checkout.url);
-
-    // 4. Pass the checkout URL to client component
-    // Client component will redirect to Paddle immediately
-    return <CheckoutContents checkoutUrl={transaction.checkout.url} />;
+    // 4. Pass the priceId and user info to client component
+    return <CheckoutContents priceId={priceId} userEmail={user.email} userId={user.id} />;
 
   } catch (error) {
     console.error('❌ Failed to create Paddle transaction:', error);
